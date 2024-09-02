@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "assistant-core"
+version = "0.0"
+description = "The core of the LLM based assistant implemented in Python with langchain"
+authors = ["Vicente Garofalo <vicente.garofalo@avangenio.com>"]
+license = "MIT License"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+tavily-python = "^0.4.0"
+langchain = "^0.2.15"
+langchain-core = "^0.2.37"
+langgraph = "^0.2.15"
+langchain-community = "^0.2.15"
+langchain-fireworks = "^0.1.7"
+langchain-openai = "^0.1.23"
+openai = "^1.43.0"
+python-dotenv = "^1.0.1"
+mistralai = "^1.0.2"
+langchain-mistralai = "^0.1.12"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
