@@ -16,7 +16,7 @@ def main():
     model = ChatMistralAI(model="open-mistral-nemo")
 
     # Setup memory
-    memory = BasicMemory()
+    memory = BasicMemory(summary_model=model, max_tokens=50, safe_tokens=30)
 
     # Setup assistant
     assistant = Assistant(

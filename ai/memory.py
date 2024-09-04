@@ -39,7 +39,9 @@ class Memory(ABC, BaseModel):
         to_summarize = []
         total_tokens = sum(len(msg.content.split())
                            for msg in self.chat_history)
-        while total_tokens > self.max_tokens:
+        if total_tokens <= self.max_tokens:
+            return []
+        while total_tokens > self.safe_tokens:
             oldest_message = self.chat_history.pop(0)
             total_tokens -= len(oldest_message.content.split())
             to_summarize.append(oldest_message)
