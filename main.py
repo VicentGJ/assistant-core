@@ -1,7 +1,9 @@
+import datetime
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_mistralai import ChatMistralAI
 from ai.assistant import Assistant
 from ai.memory import BasicMemory, FileMemory
+from lib.cli import cli_app
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -39,27 +41,29 @@ def main():
     tools = [search]
 
     # Setup model
-    model = ChatMistralAI(model="open-mistral-nemo")
+    model = ChatMistralAI(model_name="open-mistral-nemo")
 
     # Setup memory
     memory = BasicMemory(summary_model=model, max_tokens=50, safe_tokens=30)
 
+    # Setup file memory
+    current_time = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     file_memory = FileMemory(
-        path="conversation_memory.json",
+        path="memory_files/" + current_time + ".json",
         summary_model=model,
-        max_tokens=8000,
-        safe_tokens=6000
+        max_tokens=120,
+        safe_tokens=80
     )
 
     # Setup assistant
     assistant = Assistant(
         model=model,
         tools=tools,
-        memory=memory,
+        memory=file_memory,
         description="You are a websearch agent. Help users get up to date info!!!"
     )
 
-    test_assistant(assistant)
+    cli_app(assistant)
 
 
 if __name__ == "__main__":

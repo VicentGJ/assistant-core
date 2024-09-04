@@ -6,6 +6,7 @@ Features
 - [x] Basic Memory
 - [x] SummaryBufferMemory
 - [x] JSONMemory
+- [x] CLI interface
 - [ ] ImageGeneration Tool
 - [ ] Long Term Memory Tool
 - [ ] Assemble ChatGPT like Assistant

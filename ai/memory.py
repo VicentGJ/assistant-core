@@ -125,13 +125,11 @@ class FileMemory(Memory):
         return [message_types[msg['type']](content=msg['content']) for msg in data]
 
     def add_chat_message(self, message: BaseMessage):
-        super().add_chat_message(message)
+        self.chat_history.append(message)
+        self._manage_chat_history()
         self._save_memory()
 
     def add_chat_messages(self, messages: list[BaseMessage]):
-        super().add_chat_messages(messages)
-        self._save_memory()
-
-    def _update_summary(self, messages_to_summarize: list[BaseMessage]):
-        super()._update_summary(messages_to_summarize)
+        self.chat_history.extend(messages)
+        self._manage_chat_history()
         self._save_memory()
