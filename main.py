@@ -1,7 +1,7 @@
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_mistralai import ChatMistralAI
 from ai.assistant import Assistant
-from ai.memory import BasicMemory
+from ai.memory import BasicMemory, FileMemory
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -17,6 +17,13 @@ def main():
 
     # Setup memory
     memory = BasicMemory(summary_model=model, max_tokens=50, safe_tokens=30)
+
+    file_memory = FileMemory(
+        path="conversation_memory.json",
+        summary_model=model,
+        max_tokens=8000,
+        safe_tokens=6000
+    )
 
     # Setup assistant
     assistant = Assistant(
@@ -41,6 +48,8 @@ def main():
     print("Chat history:")
     for message in assistant.memory.chat_history:
         print(f"{message.type}: {message.content}")
+    print("Summary:")
+    print(assistant.memory.summary.content)
 
     # Test follow-up question
     print("\nTesting follow-up question:")

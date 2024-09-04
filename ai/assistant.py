@@ -1,6 +1,6 @@
 from langchain.chat_models.base import BaseChatModel
 from langchain.tools import BaseTool
-from langchain.schema import HumanMessage
+from langchain.schema import HumanMessage, BaseMessage
 from langgraph.prebuilt import create_react_agent
 from .memory import Memory, BasicMemory
 
@@ -19,11 +19,19 @@ class Assistant:
         )
         self.memory = memory or BasicMemory()
 
+    def _create_input_messages(self, new_message: HumanMessage) -> list[BaseMessage]:
+        messages = []
+        if self.memory.summary.content:
+            messages.append(self.memory.summary)
+        messages.extend(self.memory.chat_history)
+        messages.append(new_message)
+        return messages
+
     def get_response(self, input: str):
         human_message = HumanMessage(content=input)
         self.memory.add_chat_message(human_message)
 
-        inputs = {"messages": self.memory.chat_history + [human_message]}
+        inputs = {"messages": self._create_input_messages(human_message)}
 
         final_result = None
         for chunk in self.graph.stream(inputs, stream_mode="values"):
@@ -39,7 +47,7 @@ class Assistant:
         human_message = HumanMessage(content=input)
         self.memory.add_chat_message(human_message)
 
-        inputs = {"messages": self.memory.chat_history + [human_message]}
+        inputs = {"messages": self._create_input_messages(human_message)}
 
         for chunk in self.graph.stream(inputs, stream_mode="values"):
             message = chunk["messages"][-1]

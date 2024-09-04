@@ -5,7 +5,7 @@ Features
 - [x] ReAct Assistant
 - [x] Basic Memory
 - [x] SummaryBufferMemory
-- [ ] JSONMemory
+- [x] JSONMemory
 - [ ] ImageGeneration Tool
 - [ ] Long Term Memory Tool
 - [ ] Assemble ChatGPT like Assistant
