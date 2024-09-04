@@ -3,7 +3,7 @@ from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_mistralai import ChatMistralAI
 from ai.assistant import Assistant
 from ai.memory import BasicMemory, FileMemory
-from lib.cli import cli_app
+from utils.cli import cli_app
 from dotenv import load_dotenv
 
 load_dotenv()

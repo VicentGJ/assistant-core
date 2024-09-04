@@ -9,6 +9,8 @@ Features
 - [x] CLI interface
 - [x] Show tool usage
 - [x] Get Email tool
+- [x] Send Email tool
+- [x] Email toolkit
 - [ ] ImageGeneration Tool
 - [ ] Long Term Memory Tool
 - [ ] Assemble ChatGPT like Assistant
