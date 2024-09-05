@@ -1,22 +1,20 @@
+import imaplib
+import smtplib
+import json
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import imaplib
-import email
 from email.parser import BytesParser
-import smtplib
 from typing import List
+
 from langchain.tools import BaseTool
 from langchain_core.tools.base import BaseToolkit
 from pydantic import Field
-import json
-
-from langchain_community.agent_toolkits.gmail.toolkit import GmailToolkit
 
 
 class EmailReaderTool(BaseTool):
     name: str = "email_reader"
     description: str = """
-    Use this tool to read the most recent emails from a specified email account.
+    Use this tool to read the most recent emails from the users inbo.
     Input should be a JSON string with the following key:
     - n: (optional) number of recent emails to fetch (default is 5)
     
@@ -71,75 +69,89 @@ class EmailReaderTool(BaseTool):
             return f"An error occurred: {str(e)}"
 
 
-# Usage
-email_reader = EmailReaderTool(
-    username='your_email@example.com',
-    password='your_password',
-    server='your_imap_server'
-)
-
-
 class EmailSenderTool(BaseTool):
     name: str = "email_sender"
     description: str = """
-    Use this tool to send an email.
-    Input should be a JSON string with the following keys:
-    - to: recipient's email address
-    - subject: email subject
-    - body: email body content
-    
-    The tool will send the email and return a confirmation message.
+    Send an email to a specified recipient.
+
+    Args:
+        to_email (str): The recipient's email address.
+        subject (str): The subject of the email.
+        body (str): The body content of the email.
+
+    Returns:
+        str: A confirmation message indicating whether the email was sent successfully or if an error occurred.
+
+    Raises:
+        Exception: If there's an error in sending the email, the exception message will be returned.
     """
     username: str = Field(..., description="Sender's email address")
     password: str = Field(..., description="Sender's email password")
     server: str = Field(..., description="SMTP server address")
     port: int = Field(587, description="SMTP server port")
 
-    def _run(self, input_str: str) -> str:
-        try:
-            params = json.loads(input_str)
-            to_email = params['to']
-            subject = params['subject']
-            body = params['body']
-        except (json.JSONDecodeError, KeyError):
-            return "Invalid input. Please provide a valid JSON string with 'to', 'subject', and 'body' keys."
+    def _run(self, to_email: str, subject: str, body: str) -> str:
+        print(
+            f"EmailSenderTool received input - To: {to_email}, Subject: {subject}")
+        # Print first 50 characters of body
+        print(f"Email body: {body[:50]}...")
 
         try:
-            # Create the email message
+            print("Creating email message...")
             msg = MIMEMultipart()
             msg['From'] = self.username
             msg['To'] = to_email
             msg['Subject'] = subject
             msg.attach(MIMEText(body, 'plain'))
+            print("Email message created successfully.")
 
-            # Connect to the SMTP server and send the email
-            with smtplib.SMTP(self.server, self.port) as server:
+            print(f"Connecting to SMTP server: {self.server}:{self.port}")
+            with smtplib.SMTP(self.server, self.port, local_hostname="client1.avangenio.com") as server:
+                print("Starting TLS...")
                 server.starttls()
+                print(f"Logging in as {self.username}")
                 server.login(self.username, self.password)
+                print("Sending message...")
                 server.send_message(msg)
+                print("Message sent successfully.")
 
             return f"Email sent successfully to {to_email}"
 
         except Exception as e:
+            print(f"An error occurred: {str(e)}")
             return f"An error occurred while sending the email: {str(e)}"
 
 
-# Usage
-email_sender = EmailSenderTool(
-    username='your_email@example.com',
-    password='your_password',
-    server='your_smtp_server',
-    port=587  # Adjust if your SMTP server uses a different port
-)
+class EmailToolkit(BaseToolkit):
+    """
+    A toolkit for email-related operations, providing tools for reading and sending emails.
 
+    This toolkit includes two tools:
+    1. EmailReaderTool: For reading recent emails from the user's inbox.
+    2. EmailSenderTool: For sending emails to specified recipients.
 
-class EmailToolKit(BaseToolkit):
-    username: str = Field(..., description="Sender's email address")
-    password: str = Field(..., description="Sender's email password")
-    server: str = Field(..., description="SMTP server address")
+    Attributes:
+        username (str): The email address used for both sending and reading emails.
+        password (str): The password for the email account.
+        server (str): The server address for both IMAP (reading) and SMTP (sending) operations.
+        smtp_port (int): The port number for the SMTP server, defaulting to 587.
+
+    Methods:
+        get_tools(): Returns a list of the email tools (EmailReaderTool and EmailSenderTool).
+    """
+    username: str = Field(...,
+                          description="Email address for sending and reading emails")
+    password: str = Field(..., description="Password for the email account")
+    server: str = Field(...,
+                        description="Server address for IMAP and SMTP operations")
     smtp_port: int = Field(587, description="SMTP server port")
 
     def get_tools(self) -> List[BaseTool]:
+        """
+        Instantiates and returns a list of email-related tools.
+        Returns:
+            List[BaseTool]: A list containing instances of EmailReaderTool and EmailSenderTool.
+        """
         return [
             EmailReaderTool(
                 username=self.username,
@@ -150,6 +162,6 @@ class EmailToolKit(BaseToolkit):
                 username=self.username,
                 password=self.password,
                 server=self.server,
-                port=self.port
+                port=self.smtp_port
             )
         ]
