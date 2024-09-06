@@ -11,7 +11,7 @@ Features
 - [x] Get Email tool
 - [x] Send Email tool
 - [x] Email toolkit
-- [ ] ImageGeneration Tool
+- [x] ImageGeneration Tool
 - [ ] Long Term Memory Tool
 - [x] Assemble ChatGPT like Assistant
 - [x] Build local Knowledge integration
