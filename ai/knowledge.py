@@ -12,9 +12,9 @@ import os
 
 
 def load_existing_index(vectors_path: str, index_name: str, embedding: Embeddings) -> FAISS | None:
-    full_path = os.path.join(vectors_path, index_name)
+    full_path = os.path.join(vectors_path, f"{index_name}.faiss")
     if os.path.exists(full_path):
-        return FAISS.load_local(full_path, allow_dangerous_deserialization=True, embeddings=embedding)
+        return FAISS.load_local(vectors_path, allow_dangerous_deserialization=True, embeddings=embedding)
     return None
 
 
