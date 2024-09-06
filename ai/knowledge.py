@@ -1,5 +1,6 @@
 from langchain_community.document_loaders import PyPDFDirectoryLoader
 from langchain_core.vectorstores.base import VectorStore
+from langchain_core.embeddings.embeddings import Embeddings
 from langchain_community.vectorstores.faiss import FAISS
 from tqdm import tqdm
 from utils.ollama import OllamaEmbeddings
@@ -10,34 +11,40 @@ from langchain_core.tools.base import BaseTool
 import os
 
 
-def get_faiss(data_path: str, vectors_path: str, index_name: str = "index", recreate: bool = False):
-    ollama_embeddings = OllamaEmbeddings(
-        host="http://152.206.76.41:11434",
-        model="nomic-embed-text",
-    )
-    openai_embeddings = OpenAIEmbeddings()
-
-    embeddings = openai_embeddings
-
+def load_existing_index(vectors_path: str, index_name: str, embedding: Embeddings) -> FAISS | None:
     full_path = os.path.join(vectors_path, index_name)
-    if os.path.exists(full_path) and not recreate:
-        return FAISS.load_local(allow_dangerous_deserialization=True, embeddings=embeddings)
+    if os.path.exists(full_path):
+        return FAISS.load_local(full_path, allow_dangerous_deserialization=True, embeddings=embedding)
+    return None
 
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=500,
-        chunk_overlap=0,
-    )
-    loader = PyPDFDirectoryLoader(data_path)
-    docs = loader.load_and_split(text_splitter)
+
+def create_faiss_index(docs, embedding: Embeddings, batch_size: int = 20) -> FAISS:
     db = None
-    batch_size = 20
     for i in tqdm(range(0, len(docs), batch_size), desc="Processing docs"):
         batch = docs[i:i+batch_size]
         if db is None:
-            db = FAISS.from_documents(
-                documents=batch, embedding=embeddings)
+            db = FAISS.from_documents(documents=batch, embedding=embedding)
         else:
             db.add_documents(documents=batch)
+    return db
+
+
+def get_faiss(data_path: str, vectors_path: str, index_name: str = "index", embedding: Embeddings | None = None, recreate: bool = False) -> FAISS:
+    if embedding is None:
+        embedding = OpenAIEmbeddings()
+
+    if not recreate:
+        existing_index = load_existing_index(
+            vectors_path, index_name, embedding)
+        if existing_index:
+            return existing_index
+
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=500, chunk_overlap=0)
+    loader = PyPDFDirectoryLoader(data_path)
+    docs = loader.load_and_split(text_splitter)
+
+    db = create_faiss_index(docs, embedding)
     db.save_local(vectors_path, index_name)
     return db
 

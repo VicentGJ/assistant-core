@@ -13,5 +13,6 @@ Features
 - [x] Email toolkit
 - [ ] ImageGeneration Tool
 - [ ] Long Term Memory Tool
-- [ ] Assemble ChatGPT like Assistant
-- [ ] Build local Knowledge integration
+- [x] Assemble ChatGPT like Assistant
+- [x] Build local Knowledge integration
+- [x] Improve local knowledge reusability
