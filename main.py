@@ -2,7 +2,6 @@ import datetime
 import os
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_mistralai import ChatMistralAI
-from ai import _knowledge
 from ai.assistant import Assistant
 from ai.memory import BasicMemory, FileMemory
 from ai.tools.email import EmailToolkit
