@@ -49,12 +49,12 @@ class Assistant:
     """
 
     def __init__(
-            self,
-            model: BaseChatModel,
-            tools: list[BaseTool],
-            memory: Memory | None,
-            description: str | None):
-
+        self,
+        model: BaseChatModel,
+        tools: list[BaseTool],
+        memory: Memory | None,
+        description: str | None,
+    ):
         self.graph = create_react_agent(
             model=model, tools=tools, state_modifier=description
         )

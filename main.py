@@ -2,9 +2,11 @@ import datetime
 import os
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_mistralai import ChatMistralAI
+from ai import _knowledge
 from ai.assistant import Assistant
 from ai.memory import BasicMemory, FileMemory
 from ai.tools.email import EmailToolkit
+from ai.knowledge import KnowledgeSearchTool, get_faiss
 from utils.cli import cli_app
 from dotenv import load_dotenv
 
@@ -47,8 +49,17 @@ def main():
         smtp_port=os.getenv("EMAIL_SMTP_PORT"),
     )
 
+    knowledge = get_faiss(data_path="testing_dir/",
+                          vectors_path="vectors/", recreate=True)
+
+    knowledge_tool = KnowledgeSearchTool(
+        knowledge_base=knowledge,
+        description="You use this tool if you want to get information about ReAct framework and AI agents."
+    )
+
     tools = [
-        search
+        search,
+        knowledge_tool
     ] + email_toolkit.get_tools()
 
     # Setup model
@@ -85,6 +96,7 @@ Available tools:
 1. Tavily Search: Use for web-based information retrieval
 2. Read email: Access and summarize user's emails
 3. Send email: Compose and send emails on user's behalf
+4. Knowledge Search: Get information about AI agents or the ReAct paradigm
 
 Tool usage guidelines:
 - Utilize tools when necessary to fulfill user requests
