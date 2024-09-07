@@ -1,0 +1,16 @@
+tests:
+  conversational:
+    travel_playlist_test:
+      prompts:
+        - Write me a travel playlist with 12 songs. It has to be upbeat and give lots of energy for the trip.
+        - Erase the last two songs.
+        - Change the vibe of the playlist. I want it to be more relaxing.
+        - Who is the last song? Tell me more about him.
+        - Write me a playlist to know more about his music.
+    another_test:
+      prompts:
+        - What is the weather like today?
+        - What are the top news headlines?
+        - Can you recommend a good book to read?
+        - Tell me a joke.
+        - What is the capital of France?
