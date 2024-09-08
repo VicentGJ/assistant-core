@@ -1,0 +1,38 @@
+@startuml base
+' skinparam classAttributeIconSize 0
+
+abstract class VectorStore {
+  + {abstract} add_texts(texts: List[str], metadatas: Optional[List[dict]], **kwargs: Any): List[str]
+  + {abstract} add_documents(documents: List[Document], **kwargs: Any): List[str]
+  + {abstract} similarity_search(query: str, k: int, **kwargs: Any): List[Document]
+  + {abstract} from_texts(texts: List[str], embedding: Embeddings, metadatas: Optional[List[dict]], **kwargs: Any): VectorStore
+  + from_documents(documents: List[Document], embedding: Embeddings, **kwargs: Any): VectorStore
+}
+
+class FAISS {
+  + save_local(vectors_path: str, index_name: str): None
+  + load_local(vectors_path: str, allow_dangerous_deserialization: bool, embeddings: Embeddings): FAISS
+}
+
+
+class KnowledgeSearchTool {
+  + name: str
+  + custom_description: str | None
+  + knowledge_base: VectorStore
+  + description(): str
+  - _run(query: str, num_documents: int = 5): str
+}
+
+abstract class BaseTool {
+  + name: str
+  + description: str
+  + args_schema: Optional[TypeBaseModel]
+
+  + {abstract} _run(*args: Any, **kwargs: Any): Any
+  + {abstract} _arun(*args: Any, **kwargs: Any): Any
+}
+
+BaseTool <|-- KnowledgeSearchTool
+VectorStore <|-- FAISS
+KnowledgeSearchTool *-- VectorStore
+@enduml

@@ -1,0 +1,177 @@
+@startuml base
+' skinparam classAttributeIconSize 0
+abstract class BaseModel
+
+abstract class VectorStore {
+  + {abstract} add_texts(texts: List[str], metadatas: Optional[List[dict]], **kwargs: Any): List[str]
+  + {abstract} add_documents(documents: List[Document], **kwargs: Any): List[str]
+  + {abstract} similarity_search(query: str, k: int, **kwargs: Any): List[Document]
+  + {abstract} from_texts(texts: List[str], embedding: Embeddings, metadatas: Optional[List[dict]], **kwargs: Any): VectorStore
+  + from_documents(documents: List[Document], embedding: Embeddings, **kwargs: Any): VectorStore
+}
+
+class FAISS {
+  + save_local(vectors_path: str, index_name: str): None
+  + load_local(vectors_path: str, allow_dangerous_deserialization: bool, embeddings: Embeddings): FAISS
+}
+
+class Assistant {
+  - graph: CompiledGraph
+  - memory: Memory
+  - name: str
+  + __init__(model: BaseChatModel, memory: Memory | None, name: str | None, description: str | None, tools: list[BaseTool] | None)
+  - _create_input_messages(): list[BaseMessage]
+  + get_response(input: str): ResponseSchema
+  + print_response(input: str)
+}
+
+class CompiledGraph {
+    + stream(inputs: dict, stream_mode: str): Iterator
+}
+
+class ResponseSchema {
+  + content: str
+  + tool_call: dict | None
+}
+
+abstract class Memory {
+  # chat_history: list[BaseMessage]
+  # summary: SystemMessage
+  # max_tokens: int
+  # safe_tokens: int
+  # summary_model: BaseChatModel | None
+  # _update_summary(messages_to_summarize: list[BaseMessage])
+  # _summarize_text(text: str): str
+  # _manage_chat_history()
+  # _trim_chat_history()
+  + {abstract} add_chat_message(message: BaseMessage)
+  + {abstract} add_chat_messages(messages: list[BaseMessage])
+}
+
+class BasicMemory {
+  + add_chat_message(message: BaseMessage)
+  + add_chat_messages(messages: list[BaseMessage])
+}
+
+class FileMemory {
+  - path: str
+  + __init__(**data)
+  - _load_memory()
+  - _save_memory()
+  - _serialize_messages(messages: list[BaseMessage]): list[dict]
+  - _deserialize_messages(data: list[dict]): list[BaseMessage]
+  + add_chat_message(message: BaseMessage)
+  + add_chat_messages(messages: list[BaseMessage])
+}
+
+class ImageGenerationTool {
+  + name: str
+  + description: str
+  - _run(prompt: str): str
+}
+
+class EmailToolkit {
+  + username: str
+  + password: str
+  + server: str
+  + smtp_port: int
+  + get_tools(): list[BaseTool]
+}
+
+class EmailReaderTool {
+  + name: str
+  + description: str
+  + username: str
+  + password: str
+  + server: str
+  - _run(n: int = 5): str
+}
+class EmailSenderTool {
+  + name: str
+  + description: str
+  + username: str
+  + password: str
+  + server: str
+  + port: int
+
+  + _run(to_email: str, subject: str, body: str): str
+}
+
+class KnowledgeSearchTool {
+  + name: str
+  + custom_description: str | None
+  + knowledge_base: VectorStore
+  + description(): str
+  - _run(query: str, num_documents: int = 5): str
+}
+
+abstract class BaseTool {
+  + name: str
+  + description: str
+  + args_schema: Optional[TypeBaseModel]
+
+  + {abstract} _run(*args: Any, **kwargs: Any): Any
+  + {abstract} _arun(*args: Any, **kwargs: Any): Any
+}
+
+abstract class BaseChatModel {
+  + model_name: str
+}
+
+abstract class BaseToolkit {
+  + {abstract} get_tools(): list[BaseTool]
+}
+
+abstract class BaseMessage {
+  + content: Union[str, List[Union[str, Dict]]]
+  + additional_kwargs: dict
+  + response_metadata: dict
+  + type: str
+  + name: Optional[str]
+  + id: Optional[str]
+
+  + pretty_print(): None
+}
+
+class SystemMessage {
+    + type: Literal["system"] = "system"
+}
+
+class AIMessage {
+    + type: Literal["ai"] = "ai"
+}
+
+class HumanMessage {
+    + type: Literal["human"] = "human"
+}
+
+BaseMessage <|-- SystemMessage
+BaseMessage <|-- AIMessage
+BaseMessage <|-- HumanMessage
+
+BaseModel <|-- ResponseSchema
+BaseModel <|-- Memory
+Memory <|-- BasicMemory
+Memory <|-- FileMemory
+Memory *-- BaseMessage
+Memory *-- SystemMessage 
+Memory o-- BaseChatModel
+
+BaseTool <|-- ImageGenerationTool
+BaseTool <|-- EmailReaderTool
+EmailSenderTool --|> BaseTool
+BaseTool <|-- KnowledgeSearchTool
+BaseToolkit <|-- EmailToolkit
+
+VectorStore <|-- FAISS
+
+Assistant *-- Memory
+Assistant ..> ResponseSchema
+Assistant o-- BaseTool
+Assistant ..> BaseChatModel
+Assistant *-- CompiledGraph
+
+EmailToolkit *-- EmailReaderTool
+EmailToolkit *-- EmailSenderTool
+KnowledgeSearchTool *-- VectorStore
+@enduml

@@ -1,0 +1,74 @@
+@startuml base
+' skinparam classAttributeIconSize 0
+
+abstract class BaseModel
+
+abstract class Memory {
+  # chat_history: list[BaseMessage]
+  # summary: SystemMessage
+  # max_tokens: int
+  # safe_tokens: int
+  # summary_model: BaseChatModel | None
+  # _update_summary(messages_to_summarize: list[BaseMessage])
+  # _summarize_text(text: str): str
+  # _manage_chat_history()
+  # _trim_chat_history()
+  + {abstract} add_chat_message(message: BaseMessage)
+  + {abstract} add_chat_messages(messages: list[BaseMessage])
+}
+
+class BasicMemory {
+  + add_chat_message(message: BaseMessage)
+  + add_chat_messages(messages: list[BaseMessage])
+}
+
+class FileMemory {
+  - path: str
+  + __init__(**data)
+  - _load_memory()
+  - _save_memory()
+  - _serialize_messages(messages: list[BaseMessage]): list[dict]
+  - _deserialize_messages(data: list[dict]): list[BaseMessage]
+  + add_chat_message(message: BaseMessage)
+  + add_chat_messages(messages: list[BaseMessage])
+}
+
+abstract class BaseMessage {
+  + content: Union[str, List[Union[str, Dict]]]
+  + additional_kwargs: dict
+  + response_metadata: dict
+  + type: str
+  + name: Optional[str]
+  + id: Optional[str]
+
+  + pretty_print(): None
+}
+
+class SystemMessage {
+    + type: Literal["system"] = "system"
+}
+
+class AIMessage {
+    + type: Literal["ai"] = "ai"
+}
+
+class HumanMessage {
+    + type: Literal["human"] = "human"
+}
+
+abstract class BaseChatModel {
+  + model_name: str
+}
+
+BaseMessage <|-- SystemMessage
+BaseMessage <|-- AIMessage
+BaseMessage <|-- HumanMessage
+
+BaseModel <|-- Memory
+Memory <|-- BasicMemory
+Memory <|-- FileMemory
+Memory *-- BaseMessage
+Memory *-- SystemMessage 
+Memory o-- BaseChatModel
+
+@enduml

@@ -1,0 +1,69 @@
+@startuml base
+' skinparam classAttributeIconSize 0
+
+class ImageGenerationTool {
+  + name: str
+  + description: str
+  - _run(prompt: str): str
+}
+
+class EmailToolkit {
+  + username: str
+  + password: str
+  + server: str
+  + smtp_port: int
+  + get_tools(): list[BaseTool]
+}
+
+class EmailReaderTool {
+  + name: str
+  + description: str
+  + username: str
+  + password: str
+  + server: str
+  - _run(n: int = 5): str
+}
+class EmailSenderTool {
+  + name: str
+  + description: str
+  + username: str
+  + password: str
+  + server: str
+  + port: int
+
+  + _run(to_email: str, subject: str, body: str): str
+}
+
+class KnowledgeSearchTool {
+  + name: str
+  + custom_description: str | None
+  + knowledge_base: VectorStore
+  + description(): str
+  - _run(query: str, num_documents: int = 5): str
+}
+
+abstract class BaseTool {
+  + name: str
+  + description: str
+  + args_schema: Optional[TypeBaseModel]
+
+  + {abstract} _run(*args: Any, **kwargs: Any): Any
+  + {abstract} _arun(*args: Any, **kwargs: Any): Any
+}
+
+abstract class BaseToolkit {
+  + {abstract} get_tools(): list[BaseTool]
+}
+
+
+BaseTool <|-- ImageGenerationTool
+BaseTool <|-- EmailReaderTool
+EmailSenderTool --|> BaseTool
+BaseTool <|-- KnowledgeSearchTool
+BaseToolkit <|-- EmailToolkit
+
+EmailToolkit *-- EmailReaderTool
+EmailToolkit *-- EmailSenderTool
+KnowledgeSearchTool *-- VectorStore
+
+@enduml

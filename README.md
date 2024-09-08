@@ -12,7 +12,8 @@ Features
 - [x] Send Email tool
 - [x] Email toolkit
 - [x] ImageGeneration Tool
-- [ ] Long Term Memory Tool
 - [x] Assemble ChatGPT like Assistant
 - [x] Build local Knowledge integration
 - [x] Improve local knowledge reusability
+- [ ] Long Term Memory Tool
+- [ ] Improve tool code (follow langchain architecture for verbosity, return_direct, _arun)

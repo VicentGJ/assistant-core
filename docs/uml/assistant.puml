@@ -1,0 +1,57 @@
+@startuml base
+' skinparam classAttributeIconSize 0
+
+class Assistant {
+  - graph: CompiledGraph
+  - memory: Memory
+  - name: str
+  + __init__(model: BaseChatModel, memory: Memory | None, name: str | None, description: str | None, tools: list[BaseTool] | None)
+  - _create_input_messages(): list[BaseMessage]
+  + get_response(input: str): ResponseSchema
+  + print_response(input: str)
+}
+
+class ResponseSchema {
+  + content: str
+  + tool_call: dict | None
+}
+
+abstract class Memory {
+  # chat_history: list[BaseMessage]
+  # summary: SystemMessage
+  # max_tokens: int
+  # safe_tokens: int
+  # summary_model: BaseChatModel | None
+  # _update_summary(messages_to_summarize: list[BaseMessage])
+  # _summarize_text(text: str): str
+  # _manage_chat_history()
+  # _trim_chat_history()
+  + {abstract} add_chat_message(message: BaseMessage)
+  + {abstract} add_chat_messages(messages: list[BaseMessage])
+}
+
+abstract class BaseTool {
+  + name: str
+  + description: str
+  + args_schema: Optional[TypeBaseModel]
+
+  + {abstract} _run(*args: Any, **kwargs: Any): Any
+  + {abstract} _arun(*args: Any, **kwargs: Any): Any
+}
+
+abstract class BaseChatModel {
+  + model_name: str
+}
+
+class CompiledGraph {
+    + state_modifier: str
+    + stream(inputs: dict, stream_mode: str): Iterator
+}
+
+Assistant *-- Memory
+Assistant ..> ResponseSchema
+Assistant o-- BaseTool
+Assistant ..> BaseChatModel
+Assistant *-- CompiledGraph
+
+@enduml
