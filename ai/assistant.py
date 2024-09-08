@@ -52,6 +52,7 @@ class Assistant:
         self,
         model: BaseChatModel,
         memory: Memory | None,
+        name: str | None = "jarvis",
         description: str | None = None,
         tools: list[BaseTool] | None = [],
     ):
@@ -59,6 +60,7 @@ class Assistant:
             model=model, tools=tools, state_modifier=description
         )
         self.memory = memory or BasicMemory()
+        self.name = name
 
     def _create_input_messages(self) -> list[BaseMessage]:
         messages = []

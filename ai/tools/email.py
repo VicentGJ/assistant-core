@@ -1,11 +1,9 @@
 import imaplib
 import smtplib
-import json
+import traceback
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.parser import BytesParser
-from typing import List
-
 from langchain.tools import BaseTool
 from langchain_core.tools.base import BaseToolkit
 from pydantic import Field
@@ -14,9 +12,8 @@ from pydantic import Field
 class EmailReaderTool(BaseTool):
     name: str = "email_reader"
     description: str = """
-    Use this tool to read the most recent emails from the users inbo.
-    Input should be a JSON string with the following key:
-    - n: (optional) number of recent emails to fetch (default is 5)
+    Use this tool to read the most recent emails from the users inbox.
+    Input should be the number of recent emails to fetch (default is 5)
     
     The tool will return the contents of the n most recent emails, including subject, sender, date, and body.
     """
@@ -24,27 +21,29 @@ class EmailReaderTool(BaseTool):
     password: str = Field(..., description="Email password")
     server: str = Field(..., description="IMAP server address")
 
-    def _run(self, input_str: str) -> str:
+    def _run(self, n: int = 5) -> str:
+        print(f"\n--- EmailReaderTool: _run started with n={n} ---")
         try:
-            params = json.loads(input_str)
-            n = params.get('n', 5)
-        except json.JSONDecodeError:
-            return "Invalid input. Please provide a valid JSON string."
-
-        try:
+            print(f"Connecting to email server: {self.server}...")
             # Connect to the email server
             mail = imaplib.IMAP4_SSL(self.server)
+            print(f"Logging in with username: {self.username}...")
             mail.login(self.username, self.password)
+            print(f"Selecting inbox...")
             mail.select('inbox')
 
+            print(f"Searching for {n} most recent emails...")
             # Search for the n most recent emails
             _, search_data = mail.search(None, 'ALL')
             msg_ids = search_data[0].split()
             msg_ids = msg_ids[-n:]  # Get the n most recent email ids
+            print(f"Found {len(msg_ids)} email ids.")
 
             results = []
+            print(f"Fetching and formatting email contents...")
             # Fetch and format the contents of the emails
-            for msg_id in msg_ids:
+            for i, msg_id in enumerate(msg_ids):
+                print(f"Fetching email {i+1} of {n}...")
                 _, msg_data = mail.fetch(msg_id, '(RFC822)')
                 raw_email = msg_data[0][1]
                 email_message = BytesParser().parsebytes(raw_email)
@@ -53,20 +52,28 @@ class EmailReaderTool(BaseTool):
                 email_content += f"From: {email_message['From']}\n"
                 email_content += f"Date: {email_message['Date']}\n\n"
 
+                print(f"Extracting email body...")
                 for part in email_message.walk():
                     if part.get_content_type() == 'text/plain':
                         body = part.get_payload(decode=True).decode('utf-8')
                         email_content += body
 
                 results.append(email_content)
+                print(f"Email {i+1} of {n} processed.")
 
+            print(f"Closing email connection...")
             mail.close()
             mail.logout()
 
+            print(f"Returning email contents...")
             return "\n\n------------------------\n\n".join(results)
 
         except Exception as e:
+            print(f"An error occurred: {str(e)}")
             return f"An error occurred: {str(e)}"
+
+        finally:
+            print(f"--- EmailReaderTool: _run completed ---")
 
 
 class EmailSenderTool(BaseTool):
@@ -146,7 +153,7 @@ class EmailToolkit(BaseToolkit):
                         description="Server address for IMAP and SMTP operations")
     smtp_port: int = Field(587, description="SMTP server port")
 
-    def get_tools(self) -> List[BaseTool]:
+    def get_tools(self) -> list[BaseTool]:
         """
         Instantiates and returns a list of email-related tools.
         Returns:

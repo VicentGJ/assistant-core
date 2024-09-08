@@ -7,7 +7,7 @@ from ai.memory import BasicMemory, FileMemory
 from ai.tools.email import EmailToolkit
 from ai.knowledge import KnowledgeSearchTool, get_faiss
 from ai.tools.image import ImageGenerationTool
-from testing.test import run_test
+from testing.test import test_assistant_single_tool
 from utils.cli import cli_app
 from utils.system_prompts import assistant_description_with_tool_descriptions
 from dotenv import load_dotenv
@@ -41,27 +41,25 @@ def main():
     # Setup model
     model = ChatMistralAI(model_name="open-mistral-nemo")
 
-    # Setup memory
-    memory = BasicMemory(summary_model=model, max_tokens=50, safe_tokens=30)
+    # # Setup file memory
+    # current_time = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+    # file_memory = FileMemory(
+    #     path="memory_files/" + current_time + ".json",
+    #     summary_model=model,
+    #     max_tokens=200,
+    #     safe_tokens=150
+    # )
 
-    # Setup file memory
-    current_time = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-    file_memory = FileMemory(
-        path="memory_files/" + current_time + ".json",
-        summary_model=model,
-        max_tokens=200,
-        safe_tokens=150
-    )
+    # # Setup assistant
+    # assistant = Assistant(
+    #     model=model,
+    #     tools=tools,
+    #     memory=file_memory,
+    #     description=assistant_description_with_tool_descriptions
+    # )
 
-    # Setup assistant
-    assistant = Assistant(
-        model=model,
-        tools=tools,
-        memory=file_memory,
-        description=assistant_description_with_tool_descriptions
-    )
-
-    cli_app(assistant)
+    # cli_app(assistant)
+    test_assistant_single_tool(model)
 
 
 if __name__ == "__main__":

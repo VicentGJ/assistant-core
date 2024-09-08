@@ -7,10 +7,47 @@ tests:
         - Change the vibe of the playlist. I want it to be more relaxing.
         - Who is the last song? Tell me more about him.
         - Write me a playlist to know more about his music.
-    another_test:
+    text_translation_test:
       prompts:
-        - What is the weather like today?
-        - What are the top news headlines?
-        - Can you recommend a good book to read?
-        - Tell me a joke.
-        - What is the capital of France?
+        - Translate the following text from Spanish to English -> Ana y Carlos, amigos inseparables desde que compartían crayones en el jardín de infantes, decidieron embarcarse en un épico viaje por carretera a través del país para celebrar su reciente graduación universitaria. Con un viejo Volkswagen escarabajo prestado por el tío de Carlos, un mapa arrugado comprado en una gasolinera y una playlist ecléctica que iba desde rock clásico hasta canciones de Disney, partieron sin un plan definido, dispuestos a dejarse llevar por el viento de la aventura. Desde el primer día, el viaje se convirtió en una montaña rusa de emociones y situaciones inesperadas. Apenas habían recorrido 100 kilómetros cuando el coche decidió que era un buen momento para quedarse sin gasolina en medio del desierto. Ana y Carlos se vieron obligados a empujar el vehículo varios kilómetros bajo un sol abrasador, maldiciendo su mala suerte pero riendo de lo absurdo de la situación. Esta experiencia les enseñó a siempre mantener el tanque lleno y a llevar una reserva de agua, lecciones que les serían útiles en más de una ocasión durante su travesía. A medida que avanzaban por carreteras serpenteantes y pueblos pintorescos, los amigos descubrieron que el verdadero tesoro del viaje no estaba en los destinos, sino en los encuentros fortuitos y las experiencias compartidas. En un pequeño pueblo de montaña, fueron invitados a una boda local donde bailaron hasta el amanecer con desconocidos que se convirtieron en amigos. En otra ocasión, se perdieron en un bosque durante horas antes de encontrar el camino de regreso, una experiencia que puso a prueba su paciencia y habilidades de orientación, pero que también les regaló la vista de una cascada oculta que no aparecía en ninguna guía turística. No todo fue miel sobre hojuelas; hubo momentos de tensión, como cuando una acalorada discusión sobre qué ruta tomar casi pone fin a su amistad. Se dijeron cosas hirientes y pasaron un día entero sin hablarse, comunicándose solo con gruñidos y gestos. Sin embargo, la belleza de un atardecer sobre un cañón los reconcilió, recordándoles por qué habían emprendido este viaje juntos en primer lugar. A lo largo del camino, Ana y Carlos no solo exploraron nuevos lugares, sino que también se redescubrieron a sí mismos. Ana, siempre metódica y planificadora, aprendió a soltar el control y disfrutar del momento presente. Carlos, por su parte, desarrolló un nuevo aprecio por la organización después de perder su billetera tres veces en una semana. Juntos enfrentaron desafíos que pusieron a prueba su ingenio y su amistad, desde reparar una llanta pinchada en medio de la nada con solo un tutorial de YouTube y mucha determinación, hasta consolar a una Ana desconsolada cuando su teléfono cayó al mar, llevándose consigo todas sus fotos del viaje. Pero por cada contratiempo, hubo momentos de pura magia; acampar bajo un cielo estrellado en el desierto, intercambiar historias con mochileros de todo el mundo en un albergue destartalado, o rescatar a un perro abandonado que se convirtió en su fiel compañero de viaje y al que bautizaron "Ruta". A medida que los kilómetros se acumulaban en el odómetro, Ana y Carlos se dieron cuenta de que estaban viviendo el viaje de sus vidas. Visitaron monumentos icónicos y rincones olvidados, probaron comidas exóticas en puestos callejeros y se aventuraron en actividades que nunca pensaron que harían, como lanzarse en paracaídas o participar en un concurso de comer chiles picantes (del cual Carlos aún no se recupera completamente). Cada día traía nuevas sorpresas y aprendizajes, desde descubrir la generosidad de extraños que los ayudaron cuando su coche se averió, hasta aprender a comunicarse con gestos en pueblos donde no hablaban el idioma local. Después de dos meses en la carretera, miles de kilómetros recorridos y más aventuras de las que podían contar, Ana y Carlos finalmente pusieron rumbo a casa. El viejo Volkswagen, que al principio parecía que no sobreviviría ni la primera semana, los había llevado fielmente a través de montañas, desiertos y costas. Regresaron transformados, con una nueva perspectiva sobre la vida, una amistad aún más sólida y una colección de historias que no se cansarían de contar. Al cruzar la frontera de su estado natal, intercambiaron una mirada cómplice, sabiendo que el verdadero valor de su aventura no estaba en los lugares que visitaron, sino en el camino que recorrieron juntos, en las lecciones aprendidas, en los miedos superados y en la certeza de que, pasara lo que pasara, siempre podrían contar el uno con el otro. Y mientras el sol se ponía en el horizonte, marcando el fin de su épico viaje por carretera, Ana y Carlos ya estaban planeando su próxima aventura, porque habían descubierto que la vida es demasiado corta para no vivirla al máximo.
+        - Summarize the text in 50 words or less.
+        - What do you think about the use of metaphors in this text?
+        - Can you provide an example of a similar text that uses metaphors effectively?
+        - Write a short paragraph about the importance of understanding cultural references in translation.
+    recipe_test:
+      prompts:
+        - Write a recipe for a classic beef lasagna.
+        - Adjust the recipe to make it vegetarian and gluten-free.
+        - Create a shopping list based on the adjusted recipe.
+        - Substitute the ricotta cheese with a non-dairy alternative on the shopping list.
+        - Remind me of the original recipe you provided, without the restrictions.
+    travel_planning_test:
+      prompts:
+        - I'm planning a trip to Valencia, Spain. What do you think?
+        - Plan an itinerary for 4 days in Valencia, including visits to the City of Arts and Sciences, the Central Market, and the Valencia Cathedral.
+        - Discuss some options for eating out in Valencia, including traditional Valencian cuisine and seafood restaurants.
+        - Change the itinerary to include a visit to the Turia Gardens instead of the Central Market.
+        - Discuss the budget for the trip and estimate costs for accommodations, food, and activities.
+        - Propose a limited budget of 500 euros per person for the 4-day trip.
+        - Add an extra day to the trip and suggest activities for the additional day, food included.
+
+  single_function_call:
+    read_email_test:
+      prompts:
+        - Hello there!
+        - Read my last 5 emails for me
+        - Thank you
+    wheater_test:
+      prompts:
+        - Good day
+        - Whats the weather in New York right now?
+        - Thanks
+    send_email_test:
+      prompts:
+        - Hi
+        - Could you send an email to my boss presenting my resignation? Be respectful please. His account is vsgarofalojerez@gmail.com
+        - Thanks a lot
+    generate_image_test:
+      prompts:
+        - Good day
+        - Generate an image of product presentation for the new Alicia line of perfomes. Watercolor illustration.

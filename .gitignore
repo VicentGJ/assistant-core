@@ -166,3 +166,4 @@ cython_debug/
 memory_files/
 testing_dir/
 vectors/
+testing/results/

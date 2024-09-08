@@ -5,39 +5,59 @@ import traceback
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain.chat_models.base import BaseChatModel
 from langchain_mistralai import ChatMistralAI
+from ai import assistant
 from ai.assistant import Assistant
 from ai.memory import BasicMemory, FileMemory
 from ai.tools.email import EmailToolkit
 from ai.knowledge import KnowledgeSearchTool, get_faiss
 from ai.tools.image import ImageGenerationTool
 from utils.cli import cli_app
-from utils.system_prompts import assistant_description_without_tool_descriptions
+from utils.system_prompts import assistant_description_without_tool_descriptions, assistant_without_tools
 
 
-def test_assistant_basic(assistant: Assistant):
-    # Test print_response method
-    print("Testing print_response method:")
-    assistant.print_response("Latest news on OpenAI")
+def setup_tools():
+    email_toolkit = EmailToolkit(
+        username=os.getenv("EMAIL_USERNAME"),
+        password=os.getenv("EMAIL_PASSWORD"),
+        server=os.getenv("EMAIL_SERVER"),
+        smtp_port=os.getenv("EMAIL_SMTP_PORT"),
+    )
 
-    # Test get_response method
-    print("\nTesting get_response method:")
-    response = assistant.get_response(
-        "Top three countries by gold medals in 2024 Olympic Summer Games")
-    print(f"Response: {response}")
+    knowledge = get_faiss(data_path="testing_dir/",
+                          vectors_path="vectors/", recreate=False)
 
-    # Test memory retention
-    print("\nTesting memory retention:")
-    print("Chat history:")
-    for message in assistant.memory.chat_history:
-        print(f"{message.type}: {message.content}")
-    print("Summary:")
-    print(assistant.memory.summary.content)
+    knowledge_tool = KnowledgeSearchTool(
+        knowledge_base=knowledge,
+        description="You use this tool if you want to get information about ReAct framework and AI agents."
+    )
 
-    # Test follow-up question
-    print("\nTesting follow-up question:")
-    follow_up_response = assistant.get_response(
-        "What was my previous question about?")
-    print(f"Follow-up response: {follow_up_response}")
+    tools = [
+        TavilySearchResults(max_results=4),
+        # knowledge_tool,
+        ImageGenerationTool()
+    ] + email_toolkit.get_tools()
+
+    return tools
+
+
+def test_assistant_conversational(model: BaseChatModel):
+    assistant = Assistant(
+        model=model,
+        memory=BasicMemory(),
+        description=assistant_without_tools
+    )
+    run_test(assistant, "conversational")
+
+
+def test_assistant_single_tool(model: BaseChatModel, name: str = "Nemo"):
+    assistant = Assistant(
+        model=model,
+        memory=BasicMemory(),
+        tools=setup_tools(),
+        name=name,
+        description=assistant_description_without_tool_descriptions
+    )
+    run_test(assistant, "single_function_call")
 
 
 def run_test(assistant: Assistant, test: str):
@@ -76,8 +96,29 @@ def run_test(assistant: Assistant, test: str):
 
             print("\n" + "="*50 + "\n")  # Add a separator line
 
-        # Yellow color for final summary
-        print("\n\033[93mFinal Summary:\033[0m")
-        print(assistant.memory.summary.content)
+        chat_history_yaml = {
+            "chat_history": [
+                {"type": message.type, "content": message.content}
+                for message in assistant.memory.chat_history
+            ],
+            "summary": assistant.memory.summary.content
+        }
+
+        # Serialize the final chat history to a YAML file with datetime
+        current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        chat_history_yaml = {
+            "chat_history": [
+                {"type": message.type, "content": message.content}
+                for message in assistant.memory.chat_history
+            ],
+            "summary": assistant.memory.summary.content
+        }
+
+        with open(f"testing/results/test_{assistant.name}_{test_name}_{current_time}.yaml", "w") as f:
+            yaml.dump(chat_history_yaml, f)
+
+        print(f"\n\033[93mFinal Chat History and Summary saved to "
+              f"testing/results/chat_{assistant.name}_{test_name}_{current_time}.yaml\033[0m")
+
         # Add a magenta separator line
         print("\n\033[95m" + "="*50 + "\033[0m\n")
