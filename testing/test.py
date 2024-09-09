@@ -40,7 +40,7 @@ def setup_tools():
     return tools
 
 
-def test_assistant_conversational(model: BaseChatModel):
+def test_assistant_conversational(model: BaseChatModel, name: str = "nemo"):
     assistant = Assistant(
         model=model,
         memory=BasicMemory(),
@@ -49,7 +49,7 @@ def test_assistant_conversational(model: BaseChatModel):
     run_test(assistant, "conversational")
 
 
-def test_assistant_single_tool(model: BaseChatModel, name: str = "Nemo"):
+def test_assistant_single_tool(model: BaseChatModel, name: str = "nemo"):
     assistant = Assistant(
         model=model,
         memory=BasicMemory(),
@@ -60,6 +60,17 @@ def test_assistant_single_tool(model: BaseChatModel, name: str = "Nemo"):
     run_test(assistant, "single_function_call")
 
 
+def test_assistant_multiple_tools(model: BaseChatModel, name: str = "nemo"):
+    assistant = Assistant(
+        model=model,
+        memory=BasicMemory(),
+        tools=setup_tools(),
+        name=name,
+        description=assistant_description_without_tool_descriptions
+    )
+    run_test(assistant, "multiple_function_call")
+
+
 def run_test(assistant: Assistant, test: str):
     with open("testing/test_prompts.yaml", "r") as f:
         try:
@@ -68,10 +79,13 @@ def run_test(assistant: Assistant, test: str):
             print(f"Test {test} not found in testing/test_prompts.yaml")
             return
 
+    all_test_results = []
+
     for test_name, test_data in tests.items():
         # Magenta color for test names
         print(f"\n\033[95mRunning test: {test_name}\033[0m\n")
         prompts = test_data["prompts"]
+        test_results = []
 
         for i, prompt in enumerate(prompts):
             # Green color for steps
@@ -83,7 +97,19 @@ def run_test(assistant: Assistant, test: str):
                 print("\033[94m" + "-"*50)  # Start blue formatting
                 print("Assistant:")
                 print(response.content)
+                if response.tool_call:
+                    print(f"Tool Call: {response.tool_call}")
                 print("-"*50 + "\033[0m")  # End blue formatting
+
+                result = {
+                    "prompt": prompt,
+                    "response": {
+                        "content": response.content,
+                        "tool_call": response.tool_call
+                    }
+                }
+                test_results.append(result)
+
             except Exception as e:
                 # Red color for errors
                 print(
@@ -96,29 +122,24 @@ def run_test(assistant: Assistant, test: str):
 
             print("\n" + "="*50 + "\n")  # Add a separator line
 
-        chat_history_yaml = {
-            "chat_history": [
-                {"type": message.type, "content": message.content}
-                for message in assistant.memory.chat_history
-            ],
-            "summary": assistant.memory.summary.content
-        }
+        all_test_results.append({
+            "test_name": test_name,
+            "results": test_results
+        })
 
-        # Serialize the final chat history to a YAML file with datetime
-        current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        chat_history_yaml = {
-            "chat_history": [
-                {"type": message.type, "content": message.content}
-                for message in assistant.memory.chat_history
-            ],
-            "summary": assistant.memory.summary.content
-        }
+    # Serialize all test results to a single YAML file with datetime
+    current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    results_yaml = {
+        "assistant_name": assistant.name,
+        "timestamp": current_time,
+        "tests": all_test_results
+    }
 
-        with open(f"testing/results/test_{assistant.name}_{test_name}_{current_time}.yaml", "w") as f:
-            yaml.dump(chat_history_yaml, f)
+    with open(f"testing/results/test_{assistant.name}_{test}_{current_time}.yaml", "w") as f:
+        yaml.dump(results_yaml, f)
 
-        print(f"\n\033[93mFinal Chat History and Summary saved to "
-              f"testing/results/chat_{assistant.name}_{test_name}_{current_time}.yaml\033[0m")
+    print(f"\n\033[93mAll Test Results saved to "
+          f"testing/results/test_{assistant.name}_{test}_{current_time}.yaml\033[0m")
 
-        # Add a magenta separator line
-        print("\n\033[95m" + "="*50 + "\033[0m\n")
+    # Add a magenta separator line
+    print("\n\033[95m" + "="*50 + "\033[0m\n")

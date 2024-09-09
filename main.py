@@ -1,13 +1,15 @@
 import datetime
 import os
+from tkinter.filedialog import test
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_mistralai import ChatMistralAI
+from langchain_openai import ChatOpenAI
 from ai.assistant import Assistant
 from ai.memory import BasicMemory, FileMemory
 from ai.tools.email import EmailToolkit
 from ai.knowledge import KnowledgeSearchTool, get_faiss
 from ai.tools.image import ImageGenerationTool
-from testing.test import test_assistant_single_tool
+from testing.test import test_assistant_multiple_tools, test_assistant_single_tool
 from utils.cli import cli_app
 from utils.system_prompts import assistant_description_with_tool_descriptions
 from dotenv import load_dotenv
@@ -39,7 +41,8 @@ def main():
     ] + email_toolkit.get_tools()
 
     # Setup model
-    model = ChatMistralAI(model_name="open-mistral-nemo")
+    mistral = ChatMistralAI(model="open-mistral-nemo")
+    openai = ChatOpenAI(model="gpt-4o-2024-08-06")
 
     # # Setup file memory
     # current_time = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
@@ -59,7 +62,12 @@ def main():
     # )
 
     # cli_app(assistant)
-    test_assistant_single_tool(model)
+
+    # test_assistant_single_tool(mistral, name="nemo")
+    # test_assistant_single_tool(openai, name="gpt4o")
+
+    test_assistant_multiple_tools(mistral, name="nemo")
+    test_assistant_multiple_tools(openai, name="gpt4o")
 
 
 if __name__ == "__main__":

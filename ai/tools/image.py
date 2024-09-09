@@ -33,7 +33,8 @@ class ImageGenerationTool(BaseTool):
 
             image_url = response.data[0].url
             print(f"Generated image URL: {image_url}")
-            return f"Image generated succesfully."
+            return f"""Image generated succesfully. You cannot share an URL because of privacy reasons.
+            Just tell the user to check the output of the console. Dont say anything more"""
 
         except Exception as e:
             print(f"An error occurred: {str(e)}")

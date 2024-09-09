@@ -52,11 +52,11 @@ tests:
         - Good day
         - Generate an image of product presentation for the new Alicia line of perfomes. Watercolor illustration.
 
-  multi_function_call:
+  multiple_function_call:
     customer_support_test:
         prompts:
           - Read my latest emails
-          - Write a clear and concise answer explaining the 30-day return window for the product
+          - Help me write a clear and concise answer explaining the 30-day return window for the product
           - Include details on how to initiate the return process and what to expect in terms of refunds or exchanges
           - Send the response back to the customer via email
     email_image_reply_test:
