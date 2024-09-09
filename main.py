@@ -67,7 +67,7 @@ def main():
     # test_assistant_single_tool(openai, name="gpt4o")
 
     test_assistant_multiple_tools(mistral, name="nemo")
-    test_assistant_multiple_tools(openai, name="gpt4o")
+    # test_assistant_multiple_tools(openai, name="gpt4o")
 
 
 if __name__ == "__main__":

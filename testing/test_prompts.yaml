@@ -55,22 +55,20 @@ tests:
   multiple_function_call:
     customer_support_test:
         prompts:
-          - Read my latest emails
-          - Help me write a clear and concise answer explaining the 30-day return window for the product
-          - Include details on how to initiate the return process and what to expect in terms of refunds or exchanges
-          - Send the response back to the customer via email
+          - Review my latest email and tell me if you find any question from a customer.
+          - How could I answer the question? I want to see a proposal before answering.
+          - Ok, write and send the answer via email
     email_image_reply_test:
       prompts:
-        - Read my lastest emails and search for something related to XYZ product launch
+        - Read my lastest emails and tell me is there is something related to the XYZ watch
         - List all key details about the watch mentioned in the email
         - Use DALL-E to generate a 1024x1024 image of the XYZ Smartwatch being worn by a person in a modern cityscape
-        - Reply to my boss telling him that the image is done and I will share it with him later
+        - Reply to my boss (vsgarofalojerez@gmail.com) telling him that the image is done and I will share it with him later
     travel_planning_test:
       prompts:
-        - I'm going on a travel to Valencia!
         - Notify my boss (vsgarofalojerez@gmail.com) by email that I will be traveling to Valencia and need 7 days vacation
         - Research the price of plane tickets from my Habana to Valencia
-        - Create an itinerary for 4 days in Valencia including visits to the City of Arts and Sciences and the Valencia Cathedral
+        - Write a travel plan for 4 days in Valencia including visits to the City of Arts and Sciences and the Valencia Cathedral
         - Add plans for eating at lunch and dinner for each day of the trip
-        - Discuss the total budget for the trip including plane tickets accommodations food and activities
+        - Discuss the total budget for the trip including plane tickets, accommodations, food and activities
         - Send an email to my boss with all the details of the plan including the itinerary and budget

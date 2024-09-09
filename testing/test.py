@@ -82,6 +82,8 @@ def run_test(assistant: Assistant, test: str):
     all_test_results = []
 
     for test_name, test_data in tests.items():
+        # Reset Assistant memory at the start
+        assistant.memory.chat_history = []
         # Magenta color for test names
         print(f"\n\033[95mRunning test: {test_name}\033[0m\n")
         prompts = test_data["prompts"]

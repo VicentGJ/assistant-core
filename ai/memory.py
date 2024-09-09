@@ -10,8 +10,8 @@ from pydantic.v1 import BaseModel, Field
 class Memory(ABC, BaseModel):
     chat_history: list[BaseMessage] = []
     summary: SystemMessage = SystemMessage(content="")
-    max_tokens: int = 8000
-    safe_tokens: int = 6000
+    max_tokens: int = 32000
+    safe_tokens: int = 24000
     summary_model: BaseChatModel | None = None
 
     def _update_summary(self, messages_to_summarize: list[BaseMessage]):

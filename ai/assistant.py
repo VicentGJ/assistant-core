@@ -116,7 +116,10 @@ class Assistant:
 
             # Add final response to memory
             if final_response:
-                self.memory.add_chat_message(final_response)
+                # Only add last message
+                # self.memory.add_chat_message(final_response)
+                # Or add everything to the memory
+                self.memory.chat_history = final_result["messages"]
 
             # Return appropriate ResponseSchema
             if tool_call_message:

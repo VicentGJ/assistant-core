@@ -55,7 +55,11 @@ class EmailReaderTool(BaseTool):
                 print(f"Extracting email body...")
                 for part in email_message.walk():
                     if part.get_content_type() == 'text/plain':
-                        body = part.get_payload(decode=True).decode('utf-8')
+                        charset = part.get_content_charset()
+                        if charset is None:
+                            charset = 'utf-8'
+                        body = part.get_payload(decode=True).decode(
+                            charset, errors='replace')
                         email_content += body
 
                 results.append(email_content)
