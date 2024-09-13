@@ -1,11 +1,12 @@
 @startuml base
 ' skinparam classAttributeIconSize 0
+left to right direction
 
 class Assistant {
   - graph: CompiledGraph
   - memory: Memory
   - name: str
-  + __init__(model: BaseChatModel, memory: Memory | None, name: str | None, description: str | None, tools: list[BaseTool] | None)
+  + __init__(model: BaseChatModel, memory: Memory, name: str, description: str, tools: list[BaseTool])
   - _create_input_messages(): list[BaseMessage]
   + get_response(input: str): ResponseSchema
   + print_response(input: str)
@@ -48,10 +49,10 @@ class CompiledGraph {
     + stream(inputs: dict, stream_mode: str): Iterator
 }
 
-Assistant *-- Memory
-Assistant ..> ResponseSchema
+Assistant *--left-- Memory
+Assistant --> ResponseSchema
 Assistant o-- BaseTool
-Assistant ..> BaseChatModel
-Assistant *-- CompiledGraph
+Assistant --> BaseChatModel
+Assistant *--right-- CompiledGraph
 
 @enduml

@@ -37,7 +37,7 @@ tests:
         - Hello there!
         - Read my last 5 emails for me
         - Thank you
-    wheater_test:
+    weather_test:
       prompts:
         - Good day
         - Whats the weather in New York right now?

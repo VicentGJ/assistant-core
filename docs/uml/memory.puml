@@ -1,7 +1,6 @@
 @startuml base
 ' skinparam classAttributeIconSize 0
-
-abstract class BaseModel
+left to right direction
 
 abstract class Memory {
   # chat_history: list[BaseMessage]
@@ -64,11 +63,10 @@ BaseMessage <|-- SystemMessage
 BaseMessage <|-- AIMessage
 BaseMessage <|-- HumanMessage
 
-BaseModel <|-- Memory
 Memory <|-- BasicMemory
 Memory <|-- FileMemory
-Memory *-- BaseMessage
+Memory *--left-- BaseMessage
 Memory *-- SystemMessage 
-Memory o-- BaseChatModel
+Memory o--right-- BaseChatModel
 
 @enduml
