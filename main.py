@@ -67,7 +67,7 @@ def main():
     # test_assistant_single_tool(mistral, name="nemo")
     # test_assistant_single_tool(openai, name="gpt4o")
 
-    test_assistant_multiple_tools(mistral, name="nemo")
+    # test_assistant_single_tool(mistral, name="nemo")
     # test_assistant_multiple_tools(openai, name="gpt4o")
     test_assistant_single_tool(ollama, name="ollama")
 

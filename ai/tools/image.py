@@ -22,10 +22,13 @@ class ImageGenerationTool(BaseTool):
             if not prompt:
                 return "Invalid input. 'query' is required."
 
-            openai = OpenAI()
+            openai = OpenAI(
+                api_key=os.getenv("APIGATEWAY_KEY"),
+                base_url="https://apigateway.avangenio.net",
+            )
 
             response = openai.images.generate(
-                model="dall-e-3",
+                model="image",
                 prompt=prompt,
                 n=1,
                 size="1024x1024"

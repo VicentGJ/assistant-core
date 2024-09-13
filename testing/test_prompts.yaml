@@ -32,6 +32,10 @@ tests:
         - Add an extra day to the trip and suggest activities for the additional day, food included.
 
   single_function_call:
+    generate_image_test:
+      prompts:
+        - Good day
+        - Generate an image of product presentation for the new Alicia line of perfomes. Watercolor illustration.
     read_email_test:
       prompts:
         - Hello there!
@@ -47,10 +51,6 @@ tests:
         - Hi
         - Could you send an email to my boss presenting my resignation? Be respectful please. His account is vsgarofalojerez@gmail.com
         - Thanks a lot
-    generate_image_test:
-      prompts:
-        - Good day
-        - Generate an image of product presentation for the new Alicia line of perfomes. Watercolor illustration.
 
   multiple_function_call:
     customer_support_test:
