@@ -1,9 +1,9 @@
 import datetime
 import os
-from tkinter.filedialog import test
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_mistralai import ChatMistralAI
 from langchain_openai import ChatOpenAI
+from langchain_ollama import ChatOllama
 from ai.assistant import Assistant
 from ai.memory import BasicMemory, FileMemory
 from ai.tools.email import EmailToolkit
@@ -43,6 +43,7 @@ def main():
     # Setup model
     mistral = ChatMistralAI(model="open-mistral-nemo")
     openai = ChatOpenAI(model="gpt-4o-2024-08-06")
+    ollama = ChatOllama(model="mistral-nemo", num_predict=1024)
 
     # # Setup file memory
     # current_time = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")

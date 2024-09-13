@@ -23,13 +23,13 @@ def setup_tools():
         smtp_port=os.getenv("EMAIL_SMTP_PORT"),
     )
 
-    knowledge = get_faiss(data_path="testing_dir/",
-                          vectors_path="vectors/", recreate=False)
+    # knowledge = get_faiss(data_path="testing_dir/",
+    #                       vectors_path="vectors/", recreate=False)
 
-    knowledge_tool = KnowledgeSearchTool(
-        knowledge_base=knowledge,
-        description="You use this tool if you want to get information about ReAct framework and AI agents."
-    )
+    # knowledge_tool = KnowledgeSearchTool(
+    #     knowledge_base=knowledge,
+    #     description="You use this tool if you want to get information about ReAct framework and AI agents."
+    # )
 
     tools = [
         TavilySearchResults(max_results=4),

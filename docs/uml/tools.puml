@@ -1,5 +1,6 @@
 @startuml base
 ' skinparam classAttributeIconSize 0
+left to right direction
 
 class ImageGenerationTool {
   + name: str
@@ -56,11 +57,11 @@ abstract class BaseToolkit {
 }
 
 
-BaseTool <|-- ImageGenerationTool
-BaseTool <|-- EmailReaderTool
+BaseTool <|--left-- ImageGenerationTool
+BaseTool <|--left-- EmailReaderTool
 EmailSenderTool --|> BaseTool
-BaseTool <|-- KnowledgeSearchTool
-BaseToolkit <|-- EmailToolkit
+BaseTool <|--right-- KnowledgeSearchTool
+EmailToolkit --|> BaseToolkit
 
 EmailToolkit *-- EmailReaderTool
 EmailToolkit *-- EmailSenderTool
