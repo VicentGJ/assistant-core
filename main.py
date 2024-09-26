@@ -1,4 +1,5 @@
 import datetime
+from email.mime import base
 import os
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_mistralai import ChatMistralAI
@@ -35,41 +36,47 @@ def main():
     # )
 
     tools = [
-        TavilySearchResults(max_results=4),
+        # TavilySearchResults(max_results=4),
         # knowledge_tool,
-        ImageGenerationTool()
-    ] + email_toolkit.get_tools()
+        ImageGenerationTool(),
+    ]  # + email_toolkit.get_tools()
 
     # Setup model
     mistral = ChatMistralAI(model="open-mistral-nemo")
+    gateway = ChatOpenAI(
+        model="spark",
+        api_key=os.getenv("APIGATEWAY_KEY"),
+        base_url="https://apigateway.avangenio.net",
+    )
     openai = ChatOpenAI(model="gpt-4o-2024-08-06")
     ollama = ChatOllama(model="mistral-nemo", num_predict=1024)
 
     # # Setup file memory
-    # current_time = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-    # file_memory = FileMemory(
-    #     path="memory_files/" + current_time + ".json",
-    #     summary_model=model,
-    #     max_tokens=200,
-    #     safe_tokens=150
-    # )
+    current_time = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+    file_memory = FileMemory(
+        path="memory_files/" + current_time + ".json",
+        summary_model=mistral,
+        max_tokens=200,
+        safe_tokens=150,
+    )
 
-    # # Setup assistant
-    # assistant = Assistant(
-    #     model=model,
-    #     tools=tools,
-    #     memory=file_memory,
-    #     description=assistant_description_with_tool_descriptions
-    # )
+    # Setup assistant
+    assistant = Assistant(
+        model=gateway,
+        tools=tools,
+        memory=file_memory,
+        description=assistant_description_with_tool_descriptions,
+    )
 
-    # cli_app(assistant)
+    cli_app(assistant)
 
     # test_assistant_single_tool(mistral, name="nemo")
+    # test_assistant_single_tool(gateway, name="gateway")
     # test_assistant_single_tool(openai, name="gpt4o")
 
     # test_assistant_single_tool(mistral, name="nemo")
     # test_assistant_multiple_tools(openai, name="gpt4o")
-    test_assistant_single_tool(ollama, name="ollama")
+    # test_assistant_single_tool(ollama, name="ollama")
 
 
 if __name__ == "__main__":
