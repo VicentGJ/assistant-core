@@ -1,15 +1,15 @@
 import datetime
-from email.mime import base
 import os
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_mistralai import ChatMistralAI
 from langchain_openai import ChatOpenAI
 from langchain_ollama import ChatOllama
-from ai.assistant import Assistant
-from ai.memory import BasicMemory, FileMemory
-from ai.tools.email import EmailToolkit
-from ai.knowledge import KnowledgeSearchTool, get_faiss
-from ai.tools.image import ImageGenerationTool
+from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
+from assistant_core.assistant import Assistant
+from assistant_core.memory import BasicMemory, FileMemory
+from assistant_core.tools.email import EmailToolkit
+from assistant_core.knowledge import KnowledgeSearchTool, get_faiss
+from assistant_core.tools.image import ImageGenerationTool
 from testing.test import test_assistant_multiple_tools, test_assistant_single_tool
 from utils.cli import cli_app
 from utils.system_prompts import assistant_description_with_tool_descriptions
@@ -48,6 +48,14 @@ def main():
         api_key=os.getenv("APIGATEWAY_KEY"),
         base_url="https://apigateway.avangenio.net",
     )
+    huggingface_enpodint = HuggingFaceEndpoint(
+        repo_id="CohereForAI/c4ai-command-r-plus-08-2024",
+        task="text-generation",
+        max_new_tokens=512,
+        do_sample=False,
+        repetition_penalty=1.03,
+    )
+    huggingface = ChatHuggingFace(llm=huggingface_enpodint)
     openai = ChatOpenAI(model="gpt-4o-2024-08-06")
     ollama = ChatOllama(model="mistral-nemo", num_predict=1024)
 
@@ -62,7 +70,7 @@ def main():
 
     # Setup assistant
     assistant = Assistant(
-        model=gateway,
+        model=huggingface,
         tools=tools,
         memory=file_memory,
         description=assistant_description_with_tool_descriptions,

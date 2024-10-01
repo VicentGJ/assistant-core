@@ -5,14 +5,17 @@ import traceback
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain.chat_models.base import BaseChatModel
 from langchain_mistralai import ChatMistralAI
-from ai import assistant
-from ai.assistant import Assistant
-from ai.memory import BasicMemory, FileMemory
-from ai.tools.email import EmailToolkit
-from ai.knowledge import KnowledgeSearchTool, get_faiss
-from ai.tools.image import ImageGenerationTool
+from assistant_core import assistant
+from assistant_core.assistant import Assistant
+from assistant_core.memory import BasicMemory, FileMemory
+from assistant_core.tools.email import EmailToolkit
+from assistant_core.knowledge import KnowledgeSearchTool, get_faiss
+from assistant_core.tools.image import ImageGenerationTool
 from utils.cli import cli_app
-from utils.system_prompts import assistant_description_without_tool_descriptions, assistant_without_tools
+from utils.system_prompts import (
+    assistant_description_without_tool_descriptions,
+    assistant_without_tools,
+)
 
 
 def setup_tools():
@@ -34,7 +37,7 @@ def setup_tools():
     tools = [
         TavilySearchResults(max_results=4),
         # knowledge_tool,
-        ImageGenerationTool()
+        ImageGenerationTool(),
     ] + email_toolkit.get_tools()
 
     return tools
@@ -42,9 +45,7 @@ def setup_tools():
 
 def test_assistant_conversational(model: BaseChatModel, name: str = "nemo"):
     assistant = Assistant(
-        model=model,
-        memory=BasicMemory(),
-        description=assistant_without_tools
+        model=model, memory=BasicMemory(), description=assistant_without_tools
     )
     run_test(assistant, "conversational")
 
@@ -55,7 +56,7 @@ def test_assistant_single_tool(model: BaseChatModel, name: str = "nemo"):
         memory=BasicMemory(),
         tools=setup_tools(),
         name=name,
-        description=assistant_description_without_tool_descriptions
+        description=assistant_description_without_tool_descriptions,
     )
     run_test(assistant, "single_function_call")
 
@@ -66,7 +67,7 @@ def test_assistant_multiple_tools(model: BaseChatModel, name: str = "nemo"):
         memory=BasicMemory(),
         tools=setup_tools(),
         name=name,
-        description=assistant_description_without_tool_descriptions
+        description=assistant_description_without_tool_descriptions,
     )
     run_test(assistant, "multiple_function_call")
 
@@ -92,23 +93,23 @@ def run_test(assistant: Assistant, test: str):
         for i, prompt in enumerate(prompts):
             # Green color for steps
             print(f"\033[92mStep {i+1}: {prompt}\033[0m")
-            print("\n" + "="*50 + "\n")  # Add a separator line
+            print("\n" + "=" * 50 + "\n")  # Add a separator line
 
             try:
                 response = assistant.get_response(prompt)
-                print("\033[94m" + "-"*50)  # Start blue formatting
+                print("\033[94m" + "-" * 50)  # Start blue formatting
                 print("Assistant:")
                 print(response.content)
                 if response.tool_call:
                     print(f"Tool Call: {response.tool_call}")
-                print("-"*50 + "\033[0m")  # End blue formatting
+                print("-" * 50 + "\033[0m")  # End blue formatting
 
                 result = {
                     "prompt": prompt,
                     "response": {
                         "content": response.content,
-                        "tool_call": response.tool_call
-                    }
+                        "tool_call": response.tool_call,
+                    },
                 }
                 test_results.append(result)
 
@@ -122,26 +123,29 @@ def run_test(assistant: Assistant, test: str):
                 print("The application will now exit.\033[0m")
                 break  # Exit the loop on error
 
-            print("\n" + "="*50 + "\n")  # Add a separator line
+            print("\n" + "=" * 50 + "\n")  # Add a separator line
 
-        all_test_results.append({
-            "test_name": test_name,
-            "results": test_results
-        })
+        all_test_results.append(
+            {"test_name": test_name, "results": test_results})
 
     # Serialize all test results to a single YAML file with datetime
     current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     results_yaml = {
         "assistant_name": assistant.name,
         "timestamp": current_time,
-        "tests": all_test_results
+        "tests": all_test_results,
     }
 
-    with open(f"testing/results/test_{assistant.name}_{test}_{current_time}.yaml", "w") as f:
+    with open(
+        f"testing/results/test_{assistant.name}_{test}_{current_time}.yaml", "w"
+    ) as f:
         yaml.dump(results_yaml, f)
 
-    print(f"\n\033[93mAll Test Results saved to "
-          f"testing/results/test_{assistant.name}_{test}_{current_time}.yaml\033[0m")
+    print(
+        f"\n\033[93mAll Test Results saved to "
+        f"testing/results/test_{assistant.name}_{
+            test}_{current_time}.yaml\033[0m"
+    )
 
     # Add a magenta separator line
-    print("\n\033[95m" + "="*50 + "\033[0m\n")
+    print("\n\033[95m" + "=" * 50 + "\033[0m\n")

@@ -4,7 +4,7 @@ from unittest import loader
 
 from langchain.docstore.document import Document
 from langchain_community.document_loaders import PyPDFLoader
-from ai._knowledge.base import AssistantKnowledge
+from assistant_core._knowledge.base import AssistantKnowledge
 
 
 class PDFKnowledgeBase(AssistantKnowledge):

@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from langchain.chat_models.base import BaseChatModel
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema import StrOutputParser, BaseMessage, HumanMessage, AIMessage, SystemMessage
-from pydantic.v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 
 
 class Memory(ABC, BaseModel):

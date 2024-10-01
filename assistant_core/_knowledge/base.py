@@ -6,7 +6,7 @@ from langchain.document_loaders.base import BaseLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_core.vectorstores.base import VectorStore
 from langchain.docstore.document import Document
-from pydantic.v1 import BaseModel as PydanticBaseModel, Field
+from pydantic import BaseModel as PydanticBaseModel, Field
 
 
 class BaseModel(PydanticBaseModel):
@@ -27,13 +27,15 @@ class AssistantKnowledge(BaseModel):
         raise NotImplementedError
 
     def search(self, query: str, num_documents: int | None = None) -> list[str]:
-        """"Returns relevant documents matching the query"""
+        """ "Returns relevant documents matching the query"""
 
         _num_documents = num_documents or self.num_documents
 
         return self.vector_db.similarity_search(query, k=_num_documents)
 
-    def load(self, recreate: bool = False, upsert: bool = False, skip_existing: bool = True) -> None:
+    def load(
+        self, recreate: bool = False, upsert: bool = False, skip_existing: bool = True
+    ) -> None:
 
         if self.vector_db is None:
             raise Exception("No vectorDB provided")
@@ -45,21 +47,39 @@ class AssistantKnowledge(BaseModel):
             docs = self.loader.load_and_split(documents_to_load)
             self.vector_db.add_documents(docs)
 
-    def load_documents(self, documents: list[Document], recreate: bool = False, upsert: bool = False, skip_existing: bool = True) -> None:
+    def load_documents(
+        self,
+        documents: list[Document],
+        recreate: bool = False,
+        upsert: bool = False,
+        skip_existing: bool = True,
+    ) -> None:
         if self.vector_db is None:
             raise Exception("No vectorDB provided")
 
         docs = RecursiveCharacterTextSplitter().split_documents(documents)
         self.vector_db.add_documents(docs)
 
-    def load_document(self, document: Document, recreate: bool = False, upsert: bool = False, skip_existing: bool = True) -> None:
+    def load_document(
+        self,
+        document: Document,
+        recreate: bool = False,
+        upsert: bool = False,
+        skip_existing: bool = True,
+    ) -> None:
         if self.vector_db is None:
             raise Exception("No vectorDB provided")
 
         docs = RecursiveCharacterTextSplitter().split_documents([document])
         self.vector_db.add_documents(docs)
 
-    def load_text(self, text: str, recreate: bool = False, upsert: bool = False, skip_existing: bool = True) -> None:
+    def load_text(
+        self,
+        text: str,
+        recreate: bool = False,
+        upsert: bool = False,
+        skip_existing: bool = True,
+    ) -> None:
         if self.vector_db is None:
             raise Exception("No vectorDB provided")
 
@@ -71,7 +91,8 @@ class KnowledgeSearchTool(BaseTool):
     name: str = "knowledge_search"
     custom_description: str | None = None
     knowledge_base: AssistantKnowledge = Field(
-        ..., description="The assistant's knowledge base")
+        ..., description="The assistant's knowledge base"
+    )
 
     @property
     def description(self) -> str:
@@ -87,7 +108,10 @@ class KnowledgeSearchTool(BaseTool):
 
         if self.custom_description:
             return self.custom_description + "\n" + description_template
-        return "Use this tool to perform similarity searches on the assistant's knowledge base.\n" + description_template
+        return (
+            "Use this tool to perform similarity searches on the assistant's knowledge base.\n"
+            + description_template
+        )
 
     def _run(self, query: str, num_documents: int = 5) -> str:
         try:
@@ -98,8 +122,7 @@ class KnowledgeSearchTool(BaseTool):
 
             formatted_results = []
             for i, doc in enumerate(results, 1):
-                formatted_results.append(
-                    f"Document {i}:\n{doc.page_content}\n")
+                formatted_results.append(f"Document {i}:\n{doc.page_content}\n")
 
             return "\n".join(formatted_results)
 

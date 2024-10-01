@@ -1,6 +1,6 @@
 import sys
 import traceback
-from ai.assistant import Assistant
+from assistant_core.assistant import Assistant
 
 
 def cli_app(assistant: Assistant):
