@@ -3,7 +3,6 @@ from langchain_core.vectorstores.base import VectorStore
 from langchain_core.embeddings.embeddings import Embeddings
 from langchain_community.vectorstores.faiss import FAISS
 from tqdm import tqdm
-from utils.ollama import OllamaEmbeddings
 from langchain_openai.embeddings import OpenAIEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_core.tools.base import BaseTool
