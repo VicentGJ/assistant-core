@@ -5,10 +5,10 @@ from fastapi import APIRouter, Depends
 from starlette.responses import StreamingResponse
 
 from api.dependencies import check_connector_credentials
-from lib.connectors import ConnectorInterface
-from lib.db.interfaces import SQLAlchemyDatabase
-from lib.db.managers import DatabaseManager
-from lib.vectorizers import FaissVectorizer
+from modules.connectors import ConnectorInterface
+from modules.db.interfaces import SQLAlchemyDatabase
+from modules.db.managers import DatabaseManager
+from modules.vectorizers import FaissVectorizer
 
 router = APIRouter(prefix="/vectorization", tags=["vectorization"])
 
