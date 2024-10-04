@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends
 from starlette.responses import StreamingResponse
 
 from api.dependencies import check_connector_credentials
-from lib.connectors import BaseConnector
+from lib.connectors import ConnectorInterface
 from lib.db.interfaces import SQLAlchemyDatabase
 from lib.db.managers import DatabaseManager
 from lib.vectorizers import FaissVectorizer
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/vectorization", tags=["vectorization"])
 
 @router.post("/{storage_bucket_id}")
 async def vectorize_nextcloud_docs(
-    connector: BaseConnector = Depends(check_connector_credentials),
+    connector: ConnectorInterface = Depends(check_connector_credentials),
 ):
     def event_stream():
         try:
