@@ -15,4 +15,4 @@ class Settings(BaseSettings):
     supabase_storage_bucket_name: str
 
 
-settings = Settings()
+settings = Settings()  # type: ignore
