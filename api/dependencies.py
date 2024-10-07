@@ -1,16 +1,18 @@
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from modules.connectors import ConnectorInterface, SupabaseStorageConnector
+from modules.connectors import BaseConnector, SupabaseStorageConnector
 
 
 security = HTTPBasic()
 
 
 def check_connector_credentials(
-    credentials: HTTPBasicCredentials = Depends(security),
-) -> ConnectorInterface:
-    connector: ConnectorInterface = SupabaseStorageConnector()
+    storage_bucket_name: str, credentials: HTTPBasicCredentials = Depends(security)
+) -> BaseConnector:
+    print(storage_bucket_name)
+    print(credentials)
+    connector: BaseConnector = SupabaseStorageConnector(bucket_name=storage_bucket_name)
 
     if not connector.validate_credentials():
         raise HTTPException(

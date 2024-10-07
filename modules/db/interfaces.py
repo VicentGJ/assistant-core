@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from ...settings import settings
+from settings import settings
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 

@@ -12,14 +12,17 @@ from langchain_core.documents import Document
 from pypdf import PdfReader
 
 
-from utils.lib_utils import convert_date_string_to_datetime
-from ..settings import settings
+from modules.utils.lib_utils import convert_date_string_to_datetime
+from settings import settings
 
 
 thread_local = local()
 
 
-class ConnectorInterface(ABC):
+class BaseConnector(ABC):
+    def __init__(self, username: str) -> None:
+        self.username = username
+
     @abstractmethod
     def validate_credentials(self) -> bool:
         pass
@@ -46,7 +49,7 @@ def file_in_db(file_id, last_modified, db_manager: DatabaseManager) -> bool:
             return True
 
 
-class SupabaseStorageConnector(ConnectorInterface):
+class SupabaseStorageConnector(BaseConnector):
     def __init__(
         self,
         bucket_name: str = settings.supabase_storage_bucket_name,
@@ -55,11 +58,14 @@ class SupabaseStorageConnector(ConnectorInterface):
         service_key: str = settings.supabase_service_key,
     ):
         self.supabase: Client = create_client(url, key)
+        self.supabase.options.headers["Authorization"] = f"Bearer {service_key}"
+        self.username = bucket_name
+        if not self.validate_credentials():
+            raise ValueError("Invalid credentials")
         bucket = self._get_bucket(bucket_name)
         if not bucket:
             raise ValueError("Bucket name not found")
         self.bucket = bucket
-        self.supabase.options.headers["Authorization"] = f"Bearer {service_key}"
         self.storage_allowed_mime_types = [
             # "text/plain",
             # "application/msword",
@@ -75,7 +81,7 @@ class SupabaseStorageConnector(ConnectorInterface):
     def validate_credentials(self) -> bool:
         try:
             buckets = self.supabase.storage.list_buckets()
-            if self.bucket_name in [bucket.name for bucket in buckets]:
+            if self.username in [bucket.name for bucket in buckets]:
                 return True
             else:
                 return False
@@ -103,7 +109,10 @@ class SupabaseStorageConnector(ConnectorInterface):
 
     def _get_file(self, filename: str) -> bytes:
         try:
-            file_bytes = self.bucket.download(f"/{filename}")
+            print(filename)
+            file_bytes = self.supabase.storage.from_(self.username).download(
+                f"/{filename}"
+            )
             if type(file_bytes) is not bytes:
                 raise StorageException(
                     "Failed downloading file from Supabase Storage. Response from Supabase Storage was not the file bytes."
@@ -120,7 +129,8 @@ class SupabaseStorageConnector(ConnectorInterface):
 
     def _load_file(self, file_data: SupabaseStorageFileData) -> list[Document]:
         try:
-            file_bytes = self._get_file(file_data.id)
+            file_bytes = self._get_file(file_data.name)
+            print("BYTES: ", type(file_bytes))
             file_bytes_io = BytesIO(file_bytes)
             if not file_bytes:
                 raise StorageException(
@@ -161,17 +171,26 @@ class SupabaseStorageConnector(ConnectorInterface):
             file_elements: list[SupabaseStorageFileData] = []
             files_data = self.bucket.list()
 
-            file_elements.extend(
-                file_data
-                for file_data in files_data
-                if file_data.id
-                and not file_in_db(
-                    file_id=file_data.id,
-                    last_modified=file_data.updated_at,
-                    db_manager=db_manager,
-                )
-                and file_data.metadata.mimetype in self.supported_mimetypes
-            )
+            for file_data in files_data:
+                if (
+                    file_data["id"]
+                    and not file_in_db(
+                        file_id=file_data["id"],
+                        last_modified=file_data["updated_at"],
+                        db_manager=db_manager,
+                    )
+                    and file_data["metadata"]["mimetype"]
+                    in self.storage_allowed_mime_types
+                ):
+                    file_data = SupabaseStorageFileData(
+                        name=file_data["name"],
+                        id=file_data["id"],
+                        updated_at=file_data["updated_at"],
+                        created_at=file_data["created_at"],
+                        last_accessed_at=file_data["last_accessed_at"],
+                        metadata=file_data["metadata"],
+                    )
+                    file_elements.append(file_data)
 
             return file_elements
         except Exception as e:

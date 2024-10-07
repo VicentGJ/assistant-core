@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends
 from starlette.responses import StreamingResponse
 
 from api.dependencies import check_connector_credentials
-from modules.connectors import ConnectorInterface
+from modules.connectors import BaseConnector
 from modules.db.interfaces import SQLAlchemyDatabase
 from modules.db.managers import DatabaseManager
 from modules.vectorizers import FaissVectorizer
@@ -13,9 +13,10 @@ from modules.vectorizers import FaissVectorizer
 router = APIRouter(prefix="/vectorization", tags=["vectorization"])
 
 
-@router.post("/{storage_bucket_id}")
+@router.post("/{storage_bucket_name}")
 async def vectorize_nextcloud_docs(
-    connector: ConnectorInterface = Depends(check_connector_credentials),
+    storage_bucket_name: str,
+    connector: BaseConnector = Depends(check_connector_credentials),
 ):
     def event_stream():
         try:
@@ -51,7 +52,7 @@ async def vectorize_nextcloud_docs(
                             f'{file_name}.", "progress": {progress:.2f} }}\n\n'
                         )
             duration = time() - start_time
-            yield f'data: {{ "status": 200, "message": "Finished in {duration:.4f} seconds." }}\n\n'
+            yield f'data: {{ "status": 200, "message": "Finished vectorization of {storage_bucket_name} in {duration:.4f} seconds." }}\n\n'
 
         except Exception as e:
             yield f'data: {{"status": 500, "message": "Error: {e}" }}\n\n'

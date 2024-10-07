@@ -11,7 +11,7 @@ from langchain_community.vectorstores.faiss import FAISS
 from faiss import IndexFlatL2
 from langchain_core.embeddings import Embeddings
 from langchain_community.docstore.in_memory import InMemoryDocstore
-from ..settings import settings
+from settings import settings
 
 
 class VectorizerInterface(VectorStore, ABC):
@@ -95,6 +95,7 @@ class FaissVectorizer(VectorizerInterface, FAISS):
         if exists(full_path):
             return FAISS.load_local(
                 folder_path=self.vectors_path,
+                index_name=self.index_name,
                 embeddings=embedding,
                 allow_dangerous_deserialization=True,
             )
