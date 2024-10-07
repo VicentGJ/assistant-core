@@ -5,14 +5,14 @@ from langchain_mistralai import ChatMistralAI
 from langchain_openai import ChatOpenAI
 from langchain_ollama import ChatOllama
 from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
-from assistant_core.assistant import Assistant
-from assistant_core.memory import BasicMemory, FileMemory
-from assistant_core.tools.email import EmailToolkit
-from assistant_core.knowledge import KnowledgeSearchTool, get_faiss
-from assistant_core.tools.image import ImageGenerationTool
+from modules.assistant_core.assistant import Assistant
+from modules.assistant_core.memory import BasicMemory, FileMemory
+from modules.assistant_core.tools.email import EmailToolkit
+from modules.assistant_core.knowledge import KnowledgeSearchTool, get_faiss
+from modules.assistant_core.tools.image import ImageGenerationTool
 from testing.test import test_assistant_multiple_tools, test_assistant_single_tool
-from utils.cli import cli_app
-from utils.system_prompts import assistant_description_with_tool_descriptions
+from modules.utils.cli import cli_app
+from modules.utils.system_prompts import assistant_description_with_tool_descriptions
 from dotenv import load_dotenv
 
 load_dotenv()
