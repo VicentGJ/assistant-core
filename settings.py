@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     openai_api_key: str
     faiss_folder_path: str
     supabase_storage_bucket_name: str
+    secret_key: str
 
 
 settings = Settings()  # type: ignore

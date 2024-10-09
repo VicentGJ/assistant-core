@@ -60,8 +60,6 @@ class SupabaseStorageConnector(BaseConnector):
         self.supabase: Client = create_client(url, key)
         self.supabase.options.headers["Authorization"] = f"Bearer {service_key}"
         self.username = bucket_name
-        if not self.validate_credentials():
-            raise ValueError("Invalid credentials")
         bucket = self._get_bucket(bucket_name)
         if not bucket:
             raise ValueError("Bucket name not found")

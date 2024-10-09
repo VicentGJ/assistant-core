@@ -4,7 +4,7 @@ from time import time
 from fastapi import APIRouter, Depends
 from starlette.responses import StreamingResponse
 
-from api.dependencies import check_connector_credentials
+from api.dependencies import check_connector_credentials, validate_token
 from modules.connectors import BaseConnector
 from modules.db.interfaces import SQLAlchemyDatabase
 from modules.db.managers import DatabaseManager
@@ -13,7 +13,7 @@ from modules.vectorizers import FaissVectorizer
 router = APIRouter(prefix="/vectorization", tags=["vectorization"])
 
 
-@router.post("/{storage_bucket_name}")
+@router.post("/{storage_bucket_name}", dependencies=[Depends(validate_token)])
 async def vectorize_nextcloud_docs(
     storage_bucket_name: str,
     connector: BaseConnector = Depends(check_connector_credentials),
