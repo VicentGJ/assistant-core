@@ -9,7 +9,6 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 def validate_token(token: str = Depends(oauth2_scheme)):
-    print("TOKEN: ", token)
     if not token:
         raise HTTPException(status_code=401, detail="Api key not provided.")
     if token != settings.secret_key:

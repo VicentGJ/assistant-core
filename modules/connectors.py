@@ -37,16 +37,16 @@ class BaseConnector(ABC):
     ) -> str:
         pass
 
-
-def file_in_db(file_id, last_modified, db_manager: DatabaseManager) -> bool:
-    db_doc = db_manager.get_document(file_id)
-    if not db_doc:
-        return False
-    else:
-        if convert_date_string_to_datetime(last_modified) > db_doc.last_modified:
+    @staticmethod
+    def file_in_db(file_id, last_modified, db_manager: DatabaseManager) -> bool:
+        db_doc = db_manager.get_document(file_id)
+        if not db_doc:
             return False
         else:
-            return True
+            if convert_date_string_to_datetime(last_modified) > db_doc.last_modified:
+                return False
+            else:
+                return True
 
 
 class SupabaseStorageConnector(BaseConnector):
@@ -172,7 +172,7 @@ class SupabaseStorageConnector(BaseConnector):
             for file_data in files_data:
                 if (
                     file_data["id"]
-                    and not file_in_db(
+                    and not self.file_in_db(
                         file_id=file_data["id"],
                         last_modified=file_data["updated_at"],
                         db_manager=db_manager,
