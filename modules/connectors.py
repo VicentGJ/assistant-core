@@ -33,7 +33,11 @@ class BaseConnector(ABC):
 
     @abstractmethod
     def process_file(
-        self, file, vectorstore: VectorizerInterface, db_manager: DatabaseManager
+        self,
+        file,
+        vectorstore: VectorizerInterface,
+        db_manager: DatabaseManager,
+        contextualize_docs: bool = False,
     ) -> str:
         pass
 
@@ -197,13 +201,17 @@ class SupabaseStorageConnector(BaseConnector):
             )
 
     def process_file(
-        self, file, vectorizer: VectorizerInterface, db_manager: DatabaseManager
+        self,
+        file,
+        vectorizer: VectorizerInterface,
+        db_manager: DatabaseManager,
+        contextualize_docs: bool = False,
     ) -> str:
         try:
             docs = self._load_file(file)
             file_props = docs[0].metadata
 
-            vectorizer.send_docs_to_vectorstore(docs)
+            vectorizer.send_docs_to_vectorstore(docs, contextualize_docs)
             db_manager.register_document(
                 username=self.username,
                 file_id=file_props["id"],

@@ -14,8 +14,9 @@ router = APIRouter(prefix="/vectorization", tags=["vectorization"])
 
 
 @router.post("/{storage_bucket_name}", dependencies=[Depends(validate_token)])
-async def vectorize_nextcloud_docs(
+async def vectorize_files(
     storage_bucket_name: str,
+    contextualize_docs: bool = False,
     connector: BaseConnector = Depends(check_connector_credentials),
 ):
     def event_stream():
@@ -37,7 +38,11 @@ async def vectorize_nextcloud_docs(
             with ThreadPoolExecutor(max_workers=5) as executor:
                 futures = [
                     executor.submit(
-                        connector.process_file, file, vectorstore, db_manager
+                        connector.process_file,
+                        file,
+                        vectorstore,
+                        db_manager,
+                        contextualize_docs,
                     )
                     for file in files
                 ]
