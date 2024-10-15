@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
+from asyncio import run
 from os.path import join, exists
-from typing import Any, List
+from typing import Any
 from uuid import uuid4
 
 from langchain_core.documents import Document
@@ -11,20 +12,27 @@ from langchain_community.vectorstores.faiss import FAISS
 from faiss import IndexFlatL2
 from langchain_core.embeddings import Embeddings
 from langchain_community.docstore.in_memory import InMemoryDocstore
+from modules.contextualizer import get_contextualized_chunks
 from settings import settings
 
 
 class VectorizerInterface(VectorStore, ABC):
-    def send_docs_to_vectorstore(self, docs: List[Document], splitter=None):
+    def send_docs_to_vectorstore(
+        self, docs: list[Document], contextualize_docs: bool = False
+    ):
         print("SENDING DOCS TO VECTOR STORE...")
         try:
-            if splitter is None:
-                splitter = RecursiveCharacterTextSplitter(
-                    chunk_size=500, chunk_overlap=200
+            docs_chunks = []
+            if not contextualize_docs:
+                docs_chunks = self.split_docs(
+                    docs=docs, chunk_size=500, chunk_overlap=200
                 )
-            splitted_docs = splitter.split_documents(docs)
-            uuids = [str(uuid4()) for _ in range(len(splitted_docs))]
-            self.add_documents(documents=splitted_docs, ids=uuids)
+            else:
+                docs_splits = self.split_docs(docs=docs)
+                chunks = self.split_docs(docs_splits, 60, 15)
+                docs_chunks = run(get_contextualized_chunks(docs_splits, chunks))
+            uuids = [str(uuid4()) for _ in range(len(docs_chunks))]
+            self.add_documents(documents=docs_chunks, ids=uuids)
             print("DOCS SENT TO VECTOR STORE.")
         except Exception as e:
             raise Exception(f"Error sending to vector store: {e}")
@@ -42,6 +50,16 @@ class VectorizerInterface(VectorStore, ABC):
             return self.combine_documents(docs)
         except Exception as e:
             raise Exception(f"Error doing similarity search: {e}")
+
+    @staticmethod
+    def split_docs(
+        docs: list[Document], chunk_size: int = 32000, chunk_overlap: int = 0
+    ):
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=chunk_size, chunk_overlap=chunk_overlap, length_function=len
+        )
+        splits = text_splitter.split_documents(docs)
+        return splits
 
     @staticmethod
     def combine_documents(doc_list):
@@ -101,8 +119,10 @@ class FaissVectorizer(VectorizerInterface, FAISS):
             )
         return None
 
-    def send_docs_to_vectorstore(self, docs: List[Document], splitter=None):
-        super().send_docs_to_vectorstore(docs, splitter)
+    def send_docs_to_vectorstore(
+        self, docs: list[Document], contextualize_docs: bool = False
+    ):
+        super().send_docs_to_vectorstore(docs, contextualize_docs)
         self.save_local(folder_path=self.vectors_path, index_name=self.index_name)
 
     def delete_all_vectors(self):
