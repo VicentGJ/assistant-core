@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     faiss_folder_path: str
     supabase_storage_bucket_name: str
     secret_key: str
+    plataformia_api_key: str
+    plataformia_base_url: str
 
 
 settings = Settings()  # type: ignore
