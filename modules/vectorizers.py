@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from asyncio import run
+import os
 from os.path import join, exists
 from typing import Any
 from uuid import uuid4
@@ -14,6 +15,19 @@ from langchain_core.embeddings import Embeddings
 from langchain_community.docstore.in_memory import InMemoryDocstore
 from modules.contextualizer import get_contextualized_chunks
 from settings import settings
+from langchain_core.prompts import PromptTemplate
+from langchain_core.runnables import RunnablePassthrough
+from langchain_openai import ChatOpenAI
+from modules.utils.lib_utils import format_docs
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.retrievers import RetrieverLike
+from langchain.retrievers import ContextualCompressionRetriever
+from langchain.retrievers.document_compressors import CrossEncoderReranker
+from langchain_community.cross_encoders import HuggingFaceCrossEncoder
+from langchain_community.vectorstores import FAISS
+from langchain_openai import OpenAIEmbeddings
+from langchain_cohere import CohereRerank
+from langchain_community.retrievers import BM25Retriever
 
 
 class VectorizerInterface(VectorStore, ABC):
@@ -41,7 +55,7 @@ class VectorizerInterface(VectorStore, ABC):
     def delete_all_vectors(self, **kwargs: Any):
         pass
 
-    def search_similarity(self, query):
+    def search_similarity(self, query: str):
         try:
             docs = self.similarity_search(
                 query=query,
@@ -62,6 +76,10 @@ class VectorizerInterface(VectorStore, ABC):
         )
         splits = text_splitter.split_documents(docs)
         return splits
+
+    @abstractmethod
+    def hybrid_search(self, query: str, use_bm25_search: bool = False):
+        pass
 
     @staticmethod
     def combine_documents(doc_list):
@@ -90,7 +108,9 @@ class FaissVectorizer(VectorizerInterface, FAISS):
     def __init__(
         self,
         index_name: str,
-        embeddings: Embeddings = OpenAIEmbeddings(),
+        embeddings: Embeddings = OpenAIEmbeddings(
+            base_url="", model="embeddings", api_key=""
+        ),
         vectors_path: str = settings.faiss_folder_path,
     ):
         try:
@@ -130,3 +150,82 @@ class FaissVectorizer(VectorizerInterface, FAISS):
     def delete_all_vectors(self):
         ids = self.index_to_docstore_id.values()
         self.delete(ids)
+
+    def hybrid_search(self, query: str, use_bm25_search: bool = False):
+        template = """
+            <|system|>
+            You are an AI Assistant that follows instructions extremely well.
+            Please be truthful and give direct answers.
+            Use the following pieces of CONTEXT to answer the question at the end.
+            Please tell 'I don't know' if user query is not in CONTEXT.
+            Always anwser in Spanish.
+
+            CONTEXT: {context}
+
+            <|user|>
+            {query}
+
+            <|assistant|>
+        """
+        custom_rag_prompt = PromptTemplate.from_template(template)
+        llm = ChatOpenAI(
+            model="spark",
+            base_url=os.environ["PLATAFORMIA_BASE_URL"],
+            api_key=os.environ["PLATAFORMIA_API_KEY"],
+        )
+        initial_k = 20
+
+        if use_bm25_search == True:
+            bm25_docs = self._bm25_search(5, query)
+            bm25_vectorstore = FAISS.from_documents(bm25_docs, self.embedding_function)
+            self.merge_from(bm25_vectorstore)
+            retriever = self.as_retriever(search_kwargs={"k": initial_k})
+        else:
+            retriever = self.as_retriever(
+                search_type="similarity", search_kwargs={"k": initial_k}
+            )
+
+        rerank_retriever = self._get_rerank_retriever(
+            reranker_model="Cohere-multilingual-reranker",
+            reranked_k=5,
+            retriever=retriever,
+        )
+
+        rag_chain = (
+            {
+                "context": rerank_retriever | format_docs,
+                "query": RunnablePassthrough(),
+            }
+            | custom_rag_prompt
+            | llm
+            | StrOutputParser()
+        )
+
+        answer = rag_chain.invoke(input=query)
+        return answer
+
+    def _get_rerank_retriever(
+        self, reranker_model: str, reranked_k: int, retriever: RetrieverLike
+    ) -> ContextualCompressionRetriever:
+        if reranker_model == "HuggingFaceCrossEncoder-local":
+            model = HuggingFaceCrossEncoder(model_name="BAAI/bge-reranker-base")
+            rerank_instance = CrossEncoderReranker(model=model, top_n=reranked_k)
+        elif reranker_model == "Cohere-multilingual-reranker":
+            rerank_instance = CohereRerank(
+                cohere_api_key=os.environ["COHERE_API_KEY"],
+                model="rerank-multilingual-v3.0",
+                top_n=reranked_k,
+            )
+
+        return ContextualCompressionRetriever(
+            base_compressor=rerank_instance, base_retriever=retriever
+        )
+
+    def _bm25_search(self, bm25_k: int, query: str) -> list[Document]:
+        index_size = self.index_to_docstore_id
+        retriever = self.as_retriever(search_kwargs={"k": len(index_size)})
+        docs = retriever.invoke("")
+        bm25retriever = BM25Retriever.from_documents(docs, k=bm25_k)
+        results = bm25retriever.invoke(query)
+
+        return results
