@@ -7,7 +7,7 @@ from uuid import uuid4
 from langchain_core.documents import Document
 from langchain_core.vectorstores import VectorStore
 from langchain_openai import OpenAIEmbeddings
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_text_splitters import TokenTextSplitter
 from langchain_community.vectorstores.faiss import FAISS
 from faiss import IndexFlatL2
 from langchain_core.embeddings import Embeddings
@@ -25,7 +25,7 @@ class VectorizerInterface(VectorStore, ABC):
             docs_chunks = []
             if not contextualize_docs:
                 docs_chunks = self.split_docs(
-                    docs=docs, chunk_size=500, chunk_overlap=200
+                    docs=docs, tokens_per_chunk=60, chunk_overlap=15
                 )
             else:
                 docs_splits = self.split_docs(docs=docs)
@@ -53,10 +53,12 @@ class VectorizerInterface(VectorStore, ABC):
 
     @staticmethod
     def split_docs(
-        docs: list[Document], chunk_size: int = 32000, chunk_overlap: int = 0
+        docs: list[Document], tokens_per_chunk: int = 32000, chunk_overlap: int = 0
     ):
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=chunk_size, chunk_overlap=chunk_overlap, length_function=len
+        text_splitter = TokenTextSplitter(
+            chunk_size=tokens_per_chunk,
+            chunk_overlap=chunk_overlap,
+            length_function=len,
         )
         splits = text_splitter.split_documents(docs)
         return splits
