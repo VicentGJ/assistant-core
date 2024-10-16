@@ -1,12 +1,13 @@
 from dotenv import load_dotenv
 from fastapi import FastAPI
 
-from api.router import vectorization
+from api.router import vectorization, search
 
 load_dotenv()
 
 app = FastAPI()
 app.include_router(vectorization.router)
+app.include_router(search.router)
 
 if __name__ == "__main__":
     import uvicorn
