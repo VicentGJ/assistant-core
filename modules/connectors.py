@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from io import BytesIO
+from mimetypes import guess_type
 from threading import local
 
 from langchain_core.documents import Document
@@ -110,18 +111,14 @@ class SupabaseStorageConnector(BaseConnector):
     def _get_file(self, filename: str) -> bytes:
         try:
             print(filename)
-            file_bytes = self.supabase.storage.from_(self.username).download(
-                f"/{filename}"
-            )
+            file_bytes = self.supabase.storage.from_(self.username).download(f"/{filename}")
             if type(file_bytes) is not bytes:
                 raise StorageException(
                     "Failed downloading file from Supabase Storage. Response from Supabase Storage was not the file bytes."
                 )
             return file_bytes
         except StorageException as e:
-            raise StorageException(
-                f"Failed downloading file from Supabase Storage: {str(e)}"
-            )
+            raise StorageException(f"Failed downloading file from Supabase Storage: {str(e)}")
         except Exception as e:
             raise StorageException(
                 f"Failed downloading file from Supabase Storage: An unexpected error {e.__class__.__name__} occurred: {str(e)}"
@@ -130,7 +127,6 @@ class SupabaseStorageConnector(BaseConnector):
     def _load_file(self, file_data: SupabaseStorageFileData) -> list[Document]:
         try:
             file_bytes = self._get_file(file_data.name)
-            print("BYTES: ", type(file_bytes))
             file_bytes_io = BytesIO(file_bytes)
             if not file_bytes:
                 raise StorageException(
@@ -142,6 +138,11 @@ class SupabaseStorageConnector(BaseConnector):
             for i, page in enumerate(reader.pages):
                 text = page.extract_text()
                 if text:
+                    if not file_data.metadata:
+                        mime_type, _ = guess_type(file_data.name)
+                    else:
+                        mime_type = file_data.metadata.mimetype
+
                     # Create a Document for each page
                     doc = Document(
                         page_content=text,
@@ -150,7 +151,7 @@ class SupabaseStorageConnector(BaseConnector):
                             "name": file_data.name,
                             "updated_at": file_data.updated_at,
                             "provider": self.url,
-                            "mime_type": file_data.metadata.mimetype,
+                            "mime_type": mime_type,
                             "page": i + 1,
                         },
                     )
@@ -158,9 +159,7 @@ class SupabaseStorageConnector(BaseConnector):
 
             return documents
         except StorageException as e:
-            raise StorageException(
-                f"Failed loading file from Supabase Storage: {str(e)}"
-            )
+            raise StorageException(f"Failed loading file from Supabase Storage: {str(e)}")
         except Exception as e:
             raise StorageException(
                 f"Failed loading file from Supabase Storage: An unexpected error {e.__class__.__name__} occurred: {str(e)}"
@@ -179,8 +178,7 @@ class SupabaseStorageConnector(BaseConnector):
                         last_modified=file_data["updated_at"],
                         db_manager=db_manager,
                     )
-                    and file_data["metadata"]["mimetype"]
-                    in self.storage_allowed_mime_types
+                    and file_data["metadata"]["mimetype"] in self.storage_allowed_mime_types
                 ):
                     file_data = SupabaseStorageFileData(
                         name=file_data["name"],
@@ -218,8 +216,6 @@ class SupabaseStorageConnector(BaseConnector):
                 provider=file_props["provider"],
                 doc_type=file_props["mime_type"],
             )
-            return file_props["name"]
+            return str(file_props["name"])
         except Exception as e:
-            raise Exception(
-                f"Failed processing file: An unexpected error {e.__class__.__name__} occurred: {str(e)}"
-            )
+            raise Exception(f"Failed processing file: An unexpected error {e.__class__.__name__} occurred: {str(e)}")

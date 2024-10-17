@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from asyncio import run
-from os.path import join, exists
-from typing import Any
+from os.path import exists, join
+from typing import Any, cast
 from uuid import uuid4
 
 from faiss import IndexFlatL2
@@ -14,30 +14,24 @@ from langchain_community.retrievers import BM25Retriever
 from langchain_community.vectorstores import FAISS
 from langchain_community.vectorstores.faiss import FAISS
 from langchain_core.documents import Document
+from langchain_core.documents.compressor import BaseDocumentCompressor
 from langchain_core.embeddings import Embeddings
 from langchain_core.retrievers import RetrieverLike
 from langchain_core.vectorstores import VectorStore
 from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import TokenTextSplitter
-from langchain_community.vectorstores.faiss import FAISS
-from faiss import IndexFlatL2
-from langchain_core.embeddings import Embeddings
-from langchain_community.docstore.in_memory import InMemoryDocstore
+
 from modules.contextualizer import get_contextualized_chunks
 from settings import settings
 
 
 class VectorizerInterface(VectorStore, ABC):
-    def send_docs_to_vectorstore(
-        self, docs: list[Document], contextualize_docs: bool = False
-    ):
+    def send_docs_to_vectorstore(self, docs: list[Document], contextualize_docs: bool = False):
         print("SENDING DOCS TO VECTOR STORE...")
         try:
             docs_chunks = []
             if not contextualize_docs:
-                docs_chunks = self.split_docs(
-                    docs=docs, tokens_per_chunk=60, chunk_overlap=15
-                )
+                docs_chunks = self.split_docs(docs=docs, tokens_per_chunk=60, chunk_overlap=15)
             else:
                 docs_splits = self.split_docs(docs=docs)
                 chunks = self.split_docs(docs_splits, 60, 15)
@@ -63,21 +57,7 @@ class VectorizerInterface(VectorStore, ABC):
             raise Exception(f"Error doing similarity search: {e}")
 
     @staticmethod
-    def split_docs(
-        docs: list[Document], tokens_per_chunk: int = 32000, chunk_overlap: int = 0
-    ):
-        text_splitter = TokenTextSplitter(
-            chunk_size=tokens_per_chunk,
-            chunk_overlap=chunk_overlap,
-            length_function=len,
-        )
-        splits = text_splitter.split_documents(docs)
-        return splits
-
-    @staticmethod
-    def split_docs(
-        docs: list[Document], tokens_per_chunk: int = 32000, chunk_overlap: int = 0
-    ) -> list[Document]:
+    def split_docs(docs: list[Document], tokens_per_chunk: int = 32000, chunk_overlap: int = 0) -> list[Document]:
         text_splitter = TokenTextSplitter(
             chunk_size=tokens_per_chunk,
             chunk_overlap=chunk_overlap,
@@ -87,9 +67,7 @@ class VectorizerInterface(VectorStore, ABC):
         return splits
 
     @abstractmethod
-    def hybrid_search(
-        self, query: str, use_bm25_search: bool = False
-    ) -> list[Document]:
+    def hybrid_search(self, query: str, use_bm25_search: bool = False) -> list[Document]:
         pass
 
     @staticmethod
@@ -120,9 +98,9 @@ class FaissVectorizer(VectorizerInterface, FAISS):
         self,
         index_name: str,
         embeddings: Embeddings = OpenAIEmbeddings(
-            base_url=settings.plataformia_base_url,
             model="embeddings",
-            api_key=settings.plataformia_api_key,
+            openai_api_base=settings.plataformia_base_url,
+            openai_api_key=settings.plataformia_api_key,
         ),
         vectors_path: str = settings.faiss_folder_path,
     ):
@@ -154,9 +132,7 @@ class FaissVectorizer(VectorizerInterface, FAISS):
             )
         return None
 
-    def send_docs_to_vectorstore(
-        self, docs: list[Document], contextualize_docs: bool = False
-    ):
+    def send_docs_to_vectorstore(self, docs: list[Document], contextualize_docs: bool = False):
         super().send_docs_to_vectorstore(docs, contextualize_docs)
         self.save_local(folder_path=self.vectors_path, index_name=self.index_name)
 
@@ -164,20 +140,18 @@ class FaissVectorizer(VectorizerInterface, FAISS):
         ids = self.index_to_docstore_id.values()
         self.delete(ids)
 
-    def hybrid_search(
-        self, query: str, use_bm25_search: bool = False
-    ) -> list[Document]:
+    def hybrid_search(self, query: str, use_bm25_search: bool = False) -> list[Document]:
         initial_k = 20
 
         if use_bm25_search == True:
             bm25_docs = self._bm25_search(5, query)
-            bm25_vectorstore = FAISS.from_documents(bm25_docs, self.embedding_function)
+            bm25_vectorstore = FAISS.from_documents(
+                documents=bm25_docs, embedding=cast(Embeddings, self.embedding_function)
+            )
             self.merge_from(bm25_vectorstore)
             retriever = self.as_retriever(search_kwargs={"k": initial_k})
         else:
-            retriever = self.as_retriever(
-                search_type="similarity", search_kwargs={"k": initial_k}
-            )
+            retriever = self.as_retriever(search_type="similarity", search_kwargs={"k": initial_k})
 
         rerank_retriever = self._get_rerank_retriever(
             reranker_model="Cohere-multilingual-reranker",
@@ -192,6 +166,8 @@ class FaissVectorizer(VectorizerInterface, FAISS):
     def _get_rerank_retriever(
         self, reranker_model: str, reranked_k: int, retriever: RetrieverLike
     ) -> ContextualCompressionRetriever:
+        rerank_instance: BaseDocumentCompressor
+
         if reranker_model == "HuggingFaceCrossEncoder-local":
             model = HuggingFaceCrossEncoder(model_name="BAAI/bge-reranker-base")
             rerank_instance = CrossEncoderReranker(model=model, top_n=reranked_k)
@@ -201,10 +177,10 @@ class FaissVectorizer(VectorizerInterface, FAISS):
                 model="rerank-multilingual-v3.0",
                 top_n=reranked_k,
             )
+        else:
+            raise ValueError(f"Reranker model {reranker_model} not supported")
 
-        return ContextualCompressionRetriever(
-            base_compressor=rerank_instance, base_retriever=retriever
-        )
+        return ContextualCompressionRetriever(base_compressor=rerank_instance, base_retriever=retriever)
 
     def _bm25_search(self, bm25_k: int, query: str) -> list[Document]:
         index_size = len(self.index_to_docstore_id)
