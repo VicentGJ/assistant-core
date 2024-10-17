@@ -36,7 +36,32 @@ psycopg2 = "^2.9.9"
 langchain-cohere = "^0.3.1"
 rank-bm25 = "^0.2.2"
 
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^3.7.1"
+isort = "^5.13.2"
+black = "^24.8.0"
+autoflake = "^2.3.1"
+mypy = "^1.11.1"
+types-passlib = "^1.7.7.20240819"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 120
+
+[tool.isort]
+profile = "black"
+line_length = 120
+
+[tool.mypy]
+plugins = ["pydantic.mypy", "sqlalchemy.ext.mypy.plugin"]
+no_implicit_optional = true
+warn_return_any = true
+show_error_codes = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = ["storage3.*", "supabase"]
+ignore_missing_imports = true

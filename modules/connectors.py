@@ -1,20 +1,18 @@
 from abc import ABC, abstractmethod
 from io import BytesIO
-
-from supabase import Client, create_client
-from modules.db.managers import DatabaseManager
-from modules.types import SupabaseStorageFileData
-from modules.vectorizers import VectorizerInterface
 from threading import local
-from storage3.utils import StorageException
-from storage3._sync.file_api import SyncBucket
+
 from langchain_core.documents import Document
 from pypdf import PdfReader
+from storage3._sync.file_api import SyncBucket
+from storage3.utils import StorageException
+from supabase import Client, create_client
 
-
+from modules.db.managers import DatabaseManager
+from modules.types_models import SupabaseStorageFileData
 from modules.utils.lib_utils import convert_date_string_to_datetime
+from modules.vectorizers import VectorizerInterface
 from settings import settings
-
 
 thread_local = local()
 

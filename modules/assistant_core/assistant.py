@@ -1,9 +1,10 @@
 from langchain.chat_models.base import BaseChatModel
+from langchain.schema import BaseMessage, HumanMessage
 from langchain.tools import BaseTool
-from langchain.schema import HumanMessage, BaseMessage
 from langgraph.prebuilt import create_react_agent
 from pydantic import BaseModel, Field
-from .memory import Memory, BasicMemory
+
+from .memory import BasicMemory, Memory
 
 
 class ResponseSchema(BaseModel):
@@ -55,9 +56,7 @@ class Assistant:
         description: str | None = None,
         tools: list[BaseTool] | None = [],
     ):
-        self.graph = create_react_agent(
-            model=model, tools=tools, state_modifier=description
-        )
+        self.graph = create_react_agent(model=model, tools=tools, state_modifier=description)
         self.memory = memory or BasicMemory()
         self.name = name
 
@@ -109,9 +108,7 @@ class Assistant:
                 if message.type == "ai":
                     if not final_response:
                         final_response = message
-                    if message.content == "" and message.additional_kwargs.get(
-                        "tool_calls"
-                    ):
+                    if message.content == "" and message.additional_kwargs.get("tool_calls"):
                         tool_call_message = message
                         break
 
@@ -125,9 +122,7 @@ class Assistant:
             # Return appropriate ResponseSchema
             if tool_call_message:
                 tool_call = tool_call_message.additional_kwargs["tool_calls"][0]
-                return ResponseSchema(
-                    content=final_response.content, tool_call=tool_call
-                )
+                return ResponseSchema(content=final_response.content, tool_call=tool_call)
             elif final_response:
                 return ResponseSchema(content=final_response.content)
 

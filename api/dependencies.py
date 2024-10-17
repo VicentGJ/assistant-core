@@ -1,9 +1,8 @@
 from fastapi import Depends, HTTPException
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi.security import HTTPBasic, HTTPBasicCredentials, OAuth2PasswordBearer
 
 from modules.connectors import BaseConnector, SupabaseStorageConnector
 from settings import settings
-from fastapi.security import OAuth2PasswordBearer
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 

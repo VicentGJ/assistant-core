@@ -31,8 +31,7 @@ class OllamaEmbeddings(BaseModel, Embeddings):
         """Embed search docs."""
         embedded_docs = []
         for doc in texts:
-            embedded_docs.append(
-                list(Client(host=self.host).embeddings(self.model, doc)["embedding"]))
+            embedded_docs.append(list(Client(host=self.host).embeddings(self.model, doc)["embedding"]))
         return embedded_docs
 
     def embed_query(self, text: str) -> List[float]:
@@ -43,9 +42,7 @@ class OllamaEmbeddings(BaseModel, Embeddings):
         """Embed search docs."""
         embedded_docs = []
         for doc in texts:
-            embedded_docs.append(
-                list((await AsyncClient(host=self.host).embeddings(self.model, doc))["embedding"])
-            )
+            embedded_docs.append(list((await AsyncClient(host=self.host).embeddings(self.model, doc))["embedding"]))
         return embedded_docs
 
     async def aembed_query(self, text: str) -> List[float]:

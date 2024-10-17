@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 from fastapi import FastAPI
 
-from api.router import vectorization, search
+from api.router import search, vectorization
 
 load_dotenv()
 

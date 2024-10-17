@@ -17,6 +17,4 @@ def convert_date_string_to_datetime(date_string):
         except ValueError:
             continue
 
-    raise ValueError(
-        f"Date string {date_string} could not be parsed with any known format"
-    )
+    raise ValueError(f"Date string {date_string} could not be parsed with any known format")

@@ -1,12 +1,14 @@
-from langchain.tools import BaseTool
 import json
 from pydoc import doc
 from typing import Iterator
+
+from langchain.docstore.document import Document
 from langchain.document_loaders.base import BaseLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.tools import BaseTool
 from langchain_core.vectorstores.base import VectorStore
-from langchain.docstore.document import Document
-from pydantic import BaseModel as PydanticBaseModel, Field
+from pydantic import BaseModel as PydanticBaseModel
+from pydantic import Field
 
 
 class BaseModel(PydanticBaseModel):
@@ -33,9 +35,7 @@ class AssistantKnowledge(BaseModel):
 
         return self.vector_db.similarity_search(query, k=_num_documents)
 
-    def load(
-        self, recreate: bool = False, upsert: bool = False, skip_existing: bool = True
-    ) -> None:
+    def load(self, recreate: bool = False, upsert: bool = False, skip_existing: bool = True) -> None:
 
         if self.vector_db is None:
             raise Exception("No vectorDB provided")
@@ -90,9 +90,7 @@ class AssistantKnowledge(BaseModel):
 class KnowledgeSearchTool(BaseTool):
     name: str = "knowledge_search"
     custom_description: str | None = None
-    knowledge_base: AssistantKnowledge = Field(
-        ..., description="The assistant's knowledge base"
-    )
+    knowledge_base: AssistantKnowledge = Field(..., description="The assistant's knowledge base")
 
     @property
     def description(self) -> str:
@@ -109,8 +107,7 @@ class KnowledgeSearchTool(BaseTool):
         if self.custom_description:
             return self.custom_description + "\n" + description_template
         return (
-            "Use this tool to perform similarity searches on the assistant's knowledge base.\n"
-            + description_template
+            "Use this tool to perform similarity searches on the assistant's knowledge base.\n" + description_template
         )
 
     def _run(self, query: str, num_documents: int = 5) -> str:
