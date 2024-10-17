@@ -1,11 +1,9 @@
-import asyncio
-
+from langchain_openai import ChatOpenAI
 from langchain_core.documents import Document
-from langchain_core.output_parsers import StrOutputParser
+import asyncio
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
-from langchain_openai import ChatOpenAI
-
+from langchain_core.output_parsers import StrOutputParser
 from settings import settings
 
 llm = ChatOpenAI(
@@ -35,7 +33,9 @@ rag_chain = (
 )
 
 
-async def contextualize_chunks(documents: list[Document], chunks: list[Document]) -> list[Document]:
+async def contextualize_chunks(
+    documents: list[Document], chunks: list[Document]
+) -> list[Document]:
     contextualized_chunks = []
 
     for chunk in chunks:
@@ -43,16 +43,25 @@ async def contextualize_chunks(documents: list[Document], chunks: list[Document]
         chunk_source = chunk.metadata["source"]
 
         matching_doc = next(
-            (doc for doc in documents if doc.metadata["source"] == chunk_source and chunk_content in doc.page_content),
+            (
+                doc
+                for doc in documents
+                if doc.metadata["source"] == chunk_source
+                and chunk_content in doc.page_content
+            ),
             None,
         )
 
         if matching_doc:
             doc_content = matching_doc.page_content
 
-            context = await rag_chain.ainvoke({"doc_content": doc_content, "chunk_content": chunk_content})
+            context = await rag_chain.ainvoke(
+                {"doc_content": doc_content, "chunk_content": chunk_content}
+            )
 
-            contextualized_chunk = Document(page_content=context, metadata=chunk.metadata.copy())
+            contextualized_chunk = Document(
+                page_content=context, metadata=chunk.metadata.copy()
+            )
 
             contextualized_chunks.append(contextualized_chunk)
         else:
@@ -78,6 +87,8 @@ async def get_contextualized_chunks(docs_splits, chunks):
     while not contextualized_chunks:
         print("Esperando a que se llene contextualized_chunks...")
         await asyncio.sleep(1)  # Esperar un segundo antes de verificar de nuevo
-        contextualized_chunks = await acontextualization(docs_splits, chunks)  # Intentar nuevamente
+        contextualized_chunks = await acontextualization(
+            docs_splits, chunks
+        )  # Intentar nuevamente
 
     return contextualized_chunks

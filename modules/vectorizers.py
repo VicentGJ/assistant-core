@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from asyncio import run
-from os.path import exists, join
+from os.path import join, exists
 from typing import Any
 from uuid import uuid4
 
@@ -19,7 +19,10 @@ from langchain_core.retrievers import RetrieverLike
 from langchain_core.vectorstores import VectorStore
 from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import TokenTextSplitter
-
+from langchain_community.vectorstores.faiss import FAISS
+from faiss import IndexFlatL2
+from langchain_core.embeddings import Embeddings
+from langchain_community.docstore.in_memory import InMemoryDocstore
 from modules.contextualizer import get_contextualized_chunks
 from settings import settings
 
@@ -58,6 +61,18 @@ class VectorizerInterface(VectorStore, ABC):
             return self.combine_documents(docs)
         except Exception as e:
             raise Exception(f"Error doing similarity search: {e}")
+
+    @staticmethod
+    def split_docs(
+        docs: list[Document], tokens_per_chunk: int = 32000, chunk_overlap: int = 0
+    ):
+        text_splitter = TokenTextSplitter(
+            chunk_size=tokens_per_chunk,
+            chunk_overlap=chunk_overlap,
+            length_function=len,
+        )
+        splits = text_splitter.split_documents(docs)
+        return splits
 
     @staticmethod
     def split_docs(
