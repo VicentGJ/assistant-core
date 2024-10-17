@@ -20,7 +20,3 @@ def convert_date_string_to_datetime(date_string):
     raise ValueError(
         f"Date string {date_string} could not be parsed with any known format"
     )
-
-
-def format_docs(docs):
-    return "\n\n".join(doc.page_content for doc in docs)

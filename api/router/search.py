@@ -18,14 +18,12 @@ async def search_similarity_docs(
 ):
     try:
         vectorstore = FaissVectorizer(index_name=storage_bucket_name)
+        docs = vectorstore.hybrid_search(query, use_bm25_search=True)
 
-        # docs = vectorstore.search_similarity(query=query)
+        # Convert the list of Document objects to dictionary representation
+        serialized_docs = [doc.__dict__ for doc in docs]
 
-        # # Convert the list of Document objects to dictionary representation
-        # serialized_docs = [doc.__dict__ for doc in docs]
-
-        # return serialized_docs
-        return vectorstore.hybrid_search(query, use_bm25_search=True)
+        return serialized_docs
 
     except Exception as e:
         return JSONResponse(
