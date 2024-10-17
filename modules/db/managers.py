@@ -26,9 +26,7 @@ class DatabaseManager:
         else:
             return None
 
-    def create_document(
-        self, username, file_id, name, last_modified, provider, doc_type
-    ):
+    def create_document(self, username, file_id, name, last_modified, provider, doc_type):
         [user] = self.db.read(UserModel, {"username": username})
         if user:
             new_doc = DocumentModel(
@@ -51,9 +49,7 @@ class DatabaseManager:
             {"last_modified": last_modified},
         )
 
-    def register_document(
-        self, username, file_id, name, last_modified, provider, doc_type
-    ):
+    def register_document(self, username, file_id, name, last_modified, provider, doc_type):
         [user] = self.db.read(UserModel, {"username": username})
         if user:
             doc = self.db.read(DocumentModel, {"file_id": file_id})
@@ -61,9 +57,7 @@ class DatabaseManager:
                 self.update_modified_document(file_id, last_modified)
                 print(f"UPDATED: {doc[0].name}")
             else:
-                self.create_document(
-                    username, file_id, name, last_modified, provider, doc_type
-                )
+                self.create_document(username, file_id, name, last_modified, provider, doc_type)
         else:
             print(f"User {username} not found in database.")
 

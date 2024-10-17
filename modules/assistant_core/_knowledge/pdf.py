@@ -1,10 +1,10 @@
 from pathlib import Path
-from typing import List, Iterator
+from typing import Iterator, List
 from unittest import loader
 
+from assistant_core._knowledge.base import AssistantKnowledge
 from langchain.docstore.document import Document
 from langchain_community.document_loaders import PyPDFLoader
-from assistant_core._knowledge.base import AssistantKnowledge
 
 
 class PDFKnowledgeBase(AssistantKnowledge):
@@ -12,7 +12,7 @@ class PDFKnowledgeBase(AssistantKnowledge):
     loader: PyPDFLoader
 
     @classmethod
-    def from_path(cls, path: str | Path) -> 'PDFKnowledgeBase':
+    def from_path(cls, path: str | Path) -> "PDFKnowledgeBase":
         """
         Factory method to create a PDFKnowledgeBase instance from a given path.
 
@@ -35,8 +35,7 @@ class PDFKnowledgeBase(AssistantKnowledge):
             Iterator[List[Document]]: Iterator yielding list of documents
         """
 
-        _pdf_path: Path = Path(self.path) if isinstance(
-            self.path, str) else self.path
+        _pdf_path: Path = Path(self.path) if isinstance(self.path, str) else self.path
 
         if _pdf_path.exists() and _pdf_path.is_dir():
             for _pdf in _pdf_path.glob("**/*.pdf"):

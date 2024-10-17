@@ -1,19 +1,21 @@
 import datetime
 import os
+
+from dotenv import load_dotenv
 from langchain_community.tools.tavily_search import TavilySearchResults
-from langchain_mistralai import ChatMistralAI
-from langchain_openai import ChatOpenAI
-from langchain_ollama import ChatOllama
 from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
+from langchain_mistralai import ChatMistralAI
+from langchain_ollama import ChatOllama
+from langchain_openai import ChatOpenAI
+
 from modules.assistant_core.assistant import Assistant
+from modules.assistant_core.knowledge import KnowledgeSearchTool, get_faiss
 from modules.assistant_core.memory import BasicMemory, FileMemory
 from modules.assistant_core.tools.email import EmailToolkit
-from modules.assistant_core.knowledge import KnowledgeSearchTool, get_faiss
 from modules.assistant_core.tools.image import ImageGenerationTool
-from testing.test import test_assistant_multiple_tools, test_assistant_single_tool
 from modules.utils.cli import cli_app
 from modules.utils.system_prompts import assistant_description_with_tool_descriptions
-from dotenv import load_dotenv
+from testing.test import test_assistant_multiple_tools, test_assistant_single_tool
 
 load_dotenv()
 

@@ -1,21 +1,19 @@
-import yaml
 import datetime
 import os
 import traceback
-from langchain_community.tools.tavily_search import TavilySearchResults
-from langchain.chat_models.base import BaseChatModel
-from langchain_mistralai import ChatMistralAI
+
+import yaml
 from assistant_core import assistant
 from assistant_core.assistant import Assistant
+from assistant_core.knowledge import KnowledgeSearchTool, get_faiss
 from assistant_core.memory import BasicMemory, FileMemory
 from assistant_core.tools.email import EmailToolkit
-from assistant_core.knowledge import KnowledgeSearchTool, get_faiss
 from assistant_core.tools.image import ImageGenerationTool
+from langchain.chat_models.base import BaseChatModel
+from langchain_community.tools.tavily_search import TavilySearchResults
+from langchain_mistralai import ChatMistralAI
 from utils.cli import cli_app
-from utils.system_prompts import (
-    assistant_description_without_tool_descriptions,
-    assistant_without_tools,
-)
+from utils.system_prompts import assistant_description_without_tool_descriptions, assistant_without_tools
 
 
 def setup_tools():
@@ -44,9 +42,7 @@ def setup_tools():
 
 
 def test_assistant_conversational(model: BaseChatModel, name: str = "nemo"):
-    assistant = Assistant(
-        model=model, memory=BasicMemory(), description=assistant_without_tools
-    )
+    assistant = Assistant(model=model, memory=BasicMemory(), description=assistant_without_tools)
     run_test(assistant, "conversational")
 
 
@@ -115,8 +111,7 @@ def run_test(assistant: Assistant, test: str):
 
             except Exception as e:
                 # Red color for errors
-                print(
-                    "\033[91mError: An issue occurred while processing your request.")
+                print("\033[91mError: An issue occurred while processing your request.")
                 print(f"Details: {str(e)}")
                 print("Stack trace:")
                 traceback.print_exc()
@@ -125,8 +120,7 @@ def run_test(assistant: Assistant, test: str):
 
             print("\n" + "=" * 50 + "\n")  # Add a separator line
 
-        all_test_results.append(
-            {"test_name": test_name, "results": test_results})
+        all_test_results.append({"test_name": test_name, "results": test_results})
 
     # Serialize all test results to a single YAML file with datetime
     current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -136,9 +130,7 @@ def run_test(assistant: Assistant, test: str):
         "tests": all_test_results,
     }
 
-    with open(
-        f"testing/results/test_{assistant.name}_{test}_{current_time}.yaml", "w"
-    ) as f:
+    with open(f"testing/results/test_{assistant.name}_{test}_{current_time}.yaml", "w") as f:
         yaml.dump(results_yaml, f)
 
     print(

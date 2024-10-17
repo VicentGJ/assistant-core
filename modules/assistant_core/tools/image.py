@@ -1,8 +1,7 @@
+import os
+
 from langchain.tools import BaseTool
 from openai import OpenAI
-from openai import OpenAI
-
-import os
 
 
 class ImageGenerationTool(BaseTool):
@@ -27,12 +26,7 @@ class ImageGenerationTool(BaseTool):
                 base_url="https://apigateway.avangenio.net",
             )
 
-            response = openai.images.generate(
-                model="image",
-                prompt=prompt,
-                n=1,
-                size="1024x1024"
-            )
+            response = openai.images.generate(model="image", prompt=prompt, n=1, size="1024x1024")
 
             image_url = response.data[0].url
             print(f"Generated image URL: {image_url}")

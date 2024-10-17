@@ -4,7 +4,6 @@ from starlette.responses import JSONResponse
 from api.dependencies import check_connector_credentials, validate_token
 from modules.vectorizers import FaissVectorizer
 
-
 router = APIRouter(prefix="/search", tags=["search"])
 
 

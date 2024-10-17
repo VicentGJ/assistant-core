@@ -4,6 +4,7 @@ import traceback
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.parser import BytesParser
+
 from langchain.tools import BaseTool
 from langchain_core.tools.base import BaseToolkit
 from pydantic import Field
@@ -30,11 +31,11 @@ class EmailReaderTool(BaseTool):
             print(f"Logging in with username: {self.username}...")
             mail.login(self.username, self.password)
             print(f"Selecting inbox...")
-            mail.select('inbox')
+            mail.select("inbox")
 
             print(f"Searching for {n} most recent emails...")
             # Search for the n most recent emails
-            _, search_data = mail.search(None, 'ALL')
+            _, search_data = mail.search(None, "ALL")
             msg_ids = search_data[0].split()
             msg_ids = msg_ids[-n:]  # Get the n most recent email ids
             print(f"Found {len(msg_ids)} email ids.")
@@ -44,7 +45,7 @@ class EmailReaderTool(BaseTool):
             # Fetch and format the contents of the emails
             for i, msg_id in enumerate(msg_ids):
                 print(f"Fetching email {i+1} of {n}...")
-                _, msg_data = mail.fetch(msg_id, '(RFC822)')
+                _, msg_data = mail.fetch(msg_id, "(RFC822)")
                 raw_email = msg_data[0][1]
                 email_message = BytesParser().parsebytes(raw_email)
 
@@ -54,12 +55,11 @@ class EmailReaderTool(BaseTool):
 
                 print(f"Extracting email body...")
                 for part in email_message.walk():
-                    if part.get_content_type() == 'text/plain':
+                    if part.get_content_type() == "text/plain":
                         charset = part.get_content_charset()
                         if charset is None:
-                            charset = 'utf-8'
-                        body = part.get_payload(decode=True).decode(
-                            charset, errors='replace')
+                            charset = "utf-8"
+                        body = part.get_payload(decode=True).decode(charset, errors="replace")
                         email_content += body
 
                 results.append(email_content)
@@ -102,18 +102,17 @@ class EmailSenderTool(BaseTool):
     port: int = Field(587, description="SMTP server port")
 
     def _run(self, to_email: str, subject: str, body: str) -> str:
-        print(
-            f"EmailSenderTool received input - To: {to_email}, Subject: {subject}")
+        print(f"EmailSenderTool received input - To: {to_email}, Subject: {subject}")
         # Print first 50 characters of body
         print(f"Email body: {body[:50]}...")
 
         try:
             print("Creating email message...")
             msg = MIMEMultipart()
-            msg['From'] = self.username
-            msg['To'] = to_email
-            msg['Subject'] = subject
-            msg.attach(MIMEText(body, 'plain'))
+            msg["From"] = self.username
+            msg["To"] = to_email
+            msg["Subject"] = subject
+            msg.attach(MIMEText(body, "plain"))
             print("Email message created successfully.")
 
             print(f"Connecting to SMTP server: {self.server}:{self.port}")
@@ -150,11 +149,10 @@ class EmailToolkit(BaseToolkit):
     Methods:
         get_tools(): Returns a list of the email tools (EmailReaderTool and EmailSenderTool).
     """
-    username: str = Field(...,
-                          description="Email address for sending and reading emails")
+
+    username: str = Field(..., description="Email address for sending and reading emails")
     password: str = Field(..., description="Password for the email account")
-    server: str = Field(...,
-                        description="Server address for IMAP and SMTP operations")
+    server: str = Field(..., description="Server address for IMAP and SMTP operations")
     smtp_port: int = Field(587, description="SMTP server port")
 
     def get_tools(self) -> list[BaseTool]:
@@ -164,15 +162,11 @@ class EmailToolkit(BaseToolkit):
             List[BaseTool]: A list containing instances of EmailReaderTool and EmailSenderTool.
         """
         return [
-            EmailReaderTool(
-                username=self.username,
-                password=self.password,
-                server=self.server
-            ),
+            EmailReaderTool(username=self.username, password=self.password, server=self.server),
             EmailSenderTool(
                 username=self.username,
                 password=self.password,
                 server=self.server,
-                port=self.smtp_port
-            )
+                port=self.smtp_port,
+            ),
         ]

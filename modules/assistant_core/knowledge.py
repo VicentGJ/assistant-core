@@ -1,23 +1,19 @@
-from langchain_community.document_loaders import PyPDFDirectoryLoader
-from langchain_core.vectorstores.base import VectorStore
-from langchain_core.embeddings.embeddings import Embeddings
-from langchain_community.vectorstores.faiss import FAISS
-from tqdm import tqdm
-from langchain_openai.embeddings import OpenAIEmbeddings
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_core.tools.base import BaseTool
-
 import os
 
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.document_loaders import PyPDFDirectoryLoader
+from langchain_community.vectorstores.faiss import FAISS
+from langchain_core.embeddings.embeddings import Embeddings
+from langchain_core.tools.base import BaseTool
+from langchain_core.vectorstores.base import VectorStore
+from langchain_openai.embeddings import OpenAIEmbeddings
+from tqdm import tqdm
 
-def load_existing_index(
-    vectors_path: str, index_name: str, embedding: Embeddings
-) -> FAISS | None:
+
+def load_existing_index(vectors_path: str, index_name: str, embedding: Embeddings) -> FAISS | None:
     full_path = os.path.join(vectors_path, f"{index_name}.faiss")
     if os.path.exists(full_path):
-        return FAISS.load_local(
-            vectors_path, allow_dangerous_deserialization=True, embeddings=embedding
-        )
+        return FAISS.load_local(vectors_path, allow_dangerous_deserialization=True, embeddings=embedding)
     return None
 
 
@@ -76,8 +72,7 @@ class KnowledgeSearchTool(BaseTool):
         if self.custom_description:
             return self.custom_description + "\n" + description_template
         return (
-            "Use this tool to perform similarity searches on the assistant's knowledge base.\n"
-            + description_template
+            "Use this tool to perform similarity searches on the assistant's knowledge base.\n" + description_template
         )
 
     def _run(self, query: str, num_documents: int = 5) -> str:
@@ -85,9 +80,7 @@ class KnowledgeSearchTool(BaseTool):
             if not query:
                 return "Invalid input. 'query' is required."
 
-            results = self.knowledge_base.similarity_search(
-                query=query, k=num_documents
-            )
+            results = self.knowledge_base.similarity_search(query=query, k=num_documents)
 
             formatted_results = []
             for i, doc in enumerate(results, 1):

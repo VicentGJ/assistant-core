@@ -1,9 +1,10 @@
 import json
 import os
 from abc import ABC, abstractmethod
+
 from langchain.chat_models.base import BaseChatModel
 from langchain.prompts import ChatPromptTemplate
-from langchain.schema import StrOutputParser, BaseMessage, HumanMessage, AIMessage, SystemMessage
+from langchain.schema import AIMessage, BaseMessage, HumanMessage, StrOutputParser, SystemMessage
 from pydantic import BaseModel, Field
 
 
@@ -16,12 +17,9 @@ class Memory(ABC, BaseModel):
 
     def _update_summary(self, messages_to_summarize: list[BaseMessage]):
         # Convert messages to a format suitable for summarization
-        text_to_summarize = "\n\n".join(
-            f"<{msg.type}> Message: {msg.content}"
-            for msg in messages_to_summarize
-        )
+        text_to_summarize = "\n\n".join(f"<{msg.type}> Message: {msg.content}" for msg in messages_to_summarize)
 
-       # Perform summarization using custom LCEL chain
+        # Perform summarization using custom LCEL chain
         summary = self._summarize_text(text_to_summarize)
 
         # Update the summary
@@ -30,8 +28,10 @@ class Memory(ABC, BaseModel):
             self.summary.content = f"This is a summary of the older messages in the conversation {
                 summary}"
         else:
-            final_summary = self._summarize_text(f'''This is a conversation where this is older:\n{
-                current_summary}\n\nAnd this is more recent:\n{summary}''')
+            final_summary = self._summarize_text(
+                f"""This is a conversation where this is older:\n{
+                current_summary}\n\nAnd this is more recent:\n{summary}"""
+            )
             self.summary.content = f"This is a summary of the older messages in the conversation {
                 final_summary}"
 
@@ -43,11 +43,7 @@ class Memory(ABC, BaseModel):
         )
 
         # LCEL chain for summarization
-        summarize_chain = (
-            summarize_prompt
-            | self.summary_model
-            | StrOutputParser()
-        )
+        summarize_chain = summarize_prompt | self.summary_model | StrOutputParser()
 
         # Run the chain
         return summarize_chain.invoke({"text": text})
@@ -59,8 +55,7 @@ class Memory(ABC, BaseModel):
 
     def _trim_chat_history(self):
         to_summarize = []
-        total_tokens = sum(len(msg.content.split())
-                           for msg in self.chat_history)
+        total_tokens = sum(len(msg.content.split()) for msg in self.chat_history)
         if total_tokens < self.max_tokens:
             return []
         while total_tokens > self.safe_tokens:
@@ -90,8 +85,7 @@ class BasicMemory(Memory):
 
 
 class FileMemory(Memory):
-    path: str = Field(...,
-                      description="Path to the file where memory will be stored")
+    path: str = Field(..., description="Path to the file where memory will be stored")
 
     def __init__(self, **data):
         super().__init__(**data)
@@ -99,30 +93,29 @@ class FileMemory(Memory):
 
     def _load_memory(self):
         if os.path.exists(self.path):
-            with open(self.path, 'r') as f:
+            with open(self.path, "r") as f:
                 data = json.load(f)
-                self.chat_history = self._deserialize_messages(
-                    data['chat_history'])
-                self.summary = SystemMessage(content=data['summary'])
+                self.chat_history = self._deserialize_messages(data["chat_history"])
+                self.summary = SystemMessage(content=data["summary"])
 
     def _save_memory(self):
         data = {
-            'chat_history': self._serialize_messages(self.chat_history),
-            'summary': self.summary.content
+            "chat_history": self._serialize_messages(self.chat_history),
+            "summary": self.summary.content,
         }
-        with open(self.path, 'w') as f:
+        with open(self.path, "w") as f:
             json.dump(data, f)
 
     def _serialize_messages(self, messages: list[BaseMessage]) -> list[dict]:
-        return [{'type': msg.__class__.__name__, 'content': msg.content} for msg in messages]
+        return [{"type": msg.__class__.__name__, "content": msg.content} for msg in messages]
 
     def _deserialize_messages(self, data: list[dict]) -> list[BaseMessage]:
         message_types = {
-            'HumanMessage': HumanMessage,
-            'AIMessage': AIMessage,
-            'SystemMessage': SystemMessage
+            "HumanMessage": HumanMessage,
+            "AIMessage": AIMessage,
+            "SystemMessage": SystemMessage,
         }
-        return [message_types[msg['type']](content=msg['content']) for msg in data]
+        return [message_types[msg["type"]](content=msg["content"]) for msg in data]
 
     def add_chat_message(self, message: BaseMessage):
         self.chat_history.append(message)
