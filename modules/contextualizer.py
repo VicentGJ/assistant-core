@@ -11,7 +11,7 @@ from langchain_openai import ChatOpenAI
 from settings import settings
 
 llm = ChatOpenAI(
-    model="spark",
+    model="radiance",
     base_url=settings.plataformia_base_url,
     api_key=settings.plataformia_api_key,
 )
@@ -20,13 +20,13 @@ template = """
     {doc_content}
     </document>
 
-    Here is the chunk we want to situate within the whole document:
+    Here is the chunk we want to situate within the whole document
     <chunk>
     {chunk_content}
     </chunk>
 
-    Please provide a short succinct context, to situate this chunk within the overall document for the purposes of improving search retrieval.
-    Answer only with the succinct context and nothing else.
+    Please give a short succinct context, in the same language as the original chunk, to situate this chunk within the overall document for the purposes of improving search retrieval of the chunk. 
+    Answer only with the succinct context and nothing else. 
 """
 custom_contextualizer_prompt = PromptTemplate.from_template(template)
 runnable_serializer: RunnableSerializable = (
@@ -49,10 +49,12 @@ async def contextualize_chunk(documents: list[Document], chunk: Document) -> Doc
     if matching_doc:
         doc_content = matching_doc.page_content
         context = await rag_chain.ainvoke({"doc_content": doc_content, "chunk_content": chunk_content})
+        print(chunk_content)
         contextualized_content = (
             f"<doc_context> {str(context)} <doc_context> \n <page_content> {chunk_content} <page_content>"
         )
         contextualized_chunk = Document(page_content=contextualized_content, metadata=chunk.metadata.copy())
+        print(contextualized_chunk)
 
         return contextualized_chunk
     else:

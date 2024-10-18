@@ -27,16 +27,17 @@ from settings import settings
 
 class VectorizerInterface(VectorStore, ABC):
     def send_docs_to_vectorstore(self, docs: list[Document], contextualize_docs: bool = False):
-        print("SENDING DOCS TO VECTOR STORE...")
         try:
             docs_chunks = []
             if not contextualize_docs:
-                docs_chunks = self.split_docs(docs=docs, tokens_per_chunk=60, chunk_overlap=15)
+                docs_chunks = self._split_docs(docs=docs, tokens_per_chunk=250, chunk_overlap=100)
             else:
-                docs_splits = self.split_docs(docs=docs)
-                chunks = self.split_docs(docs_splits, 60, 15)
+                docs_splits = self._split_docs(docs=docs)
+                chunks = self._split_docs(docs_splits, 250, 100)
                 docs_chunks = run(get_contextualized_chunks(docs_splits, chunks))
             uuids = [str(uuid4()) for _ in range(len(docs_chunks))]
+
+            print("SENDING DOCS TO VECTOR STORE...")
             self.add_documents(documents=docs_chunks, ids=uuids)
             print("DOCS SENT TO VECTOR STORE.")
         except Exception as e:
@@ -52,12 +53,16 @@ class VectorizerInterface(VectorStore, ABC):
                 query=query,
                 k=5,
             )
-            return self.combine_documents(docs)
+            return self._combine_documents(docs)
         except Exception as e:
             raise Exception(f"Error doing similarity search: {e}")
 
+    @abstractmethod
+    def hybrid_search(self, query: str, use_bm25_search: bool = False) -> list[Document]:
+        pass
+
     @staticmethod
-    def split_docs(docs: list[Document], tokens_per_chunk: int = 32000, chunk_overlap: int = 0) -> list[Document]:
+    def _split_docs(docs: list[Document], tokens_per_chunk: int = 32000, chunk_overlap: int = 0) -> list[Document]:
         text_splitter = TokenTextSplitter(
             chunk_size=tokens_per_chunk,
             chunk_overlap=chunk_overlap,
@@ -66,12 +71,8 @@ class VectorizerInterface(VectorStore, ABC):
         splits = text_splitter.split_documents(docs)
         return splits
 
-    @abstractmethod
-    def hybrid_search(self, query: str, use_bm25_search: bool = False) -> list[Document]:
-        pass
-
     @staticmethod
-    def combine_documents(doc_list: list[Document]) -> list[Document]:
+    def _combine_documents(doc_list: list[Document]) -> list[Document]:
         combined_content = {}
         processed_sources = set()
 
