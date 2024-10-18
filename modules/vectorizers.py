@@ -13,6 +13,15 @@ from langchain_community.docstore.in_memory import InMemoryDocstore
 from langchain_community.retrievers import BM25Retriever
 from langchain_community.vectorstores import FAISS
 from langchain_community.vectorstores.faiss import FAISS
+from faiss import IndexFlatL2
+from langchain.retrievers import ContextualCompressionRetriever
+from langchain.retrievers.document_compressors import CrossEncoderReranker
+from langchain_cohere import CohereRerank
+from langchain_community.cross_encoders import HuggingFaceCrossEncoder
+from langchain_community.docstore.in_memory import InMemoryDocstore
+from langchain_community.retrievers import BM25Retriever
+from langchain_community.vectorstores import FAISS
+from langchain_community.vectorstores.faiss import FAISS
 from langchain_core.documents import Document
 from langchain_core.documents.compressor import BaseDocumentCompressor
 from langchain_core.embeddings import Embeddings
@@ -20,6 +29,7 @@ from langchain_core.retrievers import RetrieverLike
 from langchain_core.vectorstores import VectorStore
 from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import TokenTextSplitter
+
 
 from modules.contextualizer import get_contextualized_chunks
 from settings import settings
@@ -48,6 +58,7 @@ class VectorizerInterface(VectorStore, ABC):
         pass
 
     def search_similar_docs(self, query: str) -> list[Document]:
+    def search_similar_docs(self, query: str) -> list[Document]:
         try:
             docs = self.similarity_search(
                 query=query,
@@ -70,6 +81,12 @@ class VectorizerInterface(VectorStore, ABC):
         )
         splits = text_splitter.split_documents(docs)
         return splits
+
+    @abstractmethod
+    def hybrid_search(
+        self, query: str, use_bm25_search: bool = False
+    ) -> list[Document]:
+        pass
 
     @staticmethod
     def _combine_documents(doc_list: list[Document]) -> list[Document]:

@@ -3,15 +3,22 @@ from io import BytesIO
 from mimetypes import guess_type
 from threading import local
 
+
 from langchain_core.documents import Document
 from pypdf import PdfReader
+from storage3._sync.file_api import SyncBucket
+from storage3.utils import StorageException
+from supabase import Client, create_client
 from storage3._sync.file_api import SyncBucket
 from storage3.utils import StorageException
 from supabase import Client, create_client
 
 from modules.db.managers import DatabaseManager
 from modules.types_models import SupabaseStorageFileData
+from modules.db.managers import DatabaseManager
+from modules.types_models import SupabaseStorageFileData
 from modules.utils.lib_utils import convert_date_string_to_datetime
+from modules.vectorizers import VectorizerInterface
 from modules.vectorizers import VectorizerInterface
 from settings import settings
 
