@@ -40,9 +40,9 @@ rag_chain = cast(Chain, runnable_serializer)
 
 async def contextualize_chunk(documents: list[Document], chunk: Document) -> Document:
     chunk_content = chunk.page_content
-    chunk_source = chunk.metadata["name"]
+    chunk_source = chunk.metadata["source"]
     matching_doc = next(
-        (doc for doc in documents if doc.metadata["name"] == chunk_source and chunk_content in doc.page_content),
+        (doc for doc in documents if doc.metadata["source"] == chunk_source and chunk_content in doc.page_content),
         None,
     )
 
@@ -62,7 +62,9 @@ async def contextualize_chunk(documents: list[Document], chunk: Document) -> Doc
 
 
 async def get_contextualized_chunks(docs_splits: list[Document], chunks: list[Document]):
+    print(f"Contextualizing {len(chunks)} chunks from {docs_splits[0].metadata["source"]}...")
     tasks = [contextualize_chunk(docs_splits, chunk) for chunk in chunks]
     contextualized_chunks = await gather(*tasks)
+    print(f"{len(chunks)} chunks from {docs_splits[0].metadata["source"]} contextualized!!!!!!!!!!!!!")
 
     return [chunk for chunk in contextualized_chunks if chunk is not None]

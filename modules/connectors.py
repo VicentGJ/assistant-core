@@ -3,22 +3,15 @@ from io import BytesIO
 from mimetypes import guess_type
 from threading import local
 
-
 from langchain_core.documents import Document
 from pypdf import PdfReader
 from storage3._sync.file_api import SyncBucket
 from storage3.utils import StorageException
 from supabase import Client, create_client
-from storage3._sync.file_api import SyncBucket
-from storage3.utils import StorageException
-from supabase import Client, create_client
 
 from modules.db.managers import DatabaseManager
 from modules.types_models import SupabaseStorageFileData
-from modules.db.managers import DatabaseManager
-from modules.types_models import SupabaseStorageFileData
 from modules.utils.lib_utils import convert_date_string_to_datetime
-from modules.vectorizers import VectorizerInterface
 from modules.vectorizers import VectorizerInterface
 from settings import settings
 
@@ -137,7 +130,7 @@ class SupabaseStorageConnector(BaseConnector):
             file_bytes_io = BytesIO(file_bytes)
             if not file_bytes:
                 raise StorageException(
-                    "Failed loading file from Supabase Storage. Response from Supabase Storage was empty."
+                    f"Failed loading file {file_data.name} from Supabase Storage. Response from Supabase Storage was empty."
                 )
             reader = PdfReader(file_bytes_io)
             documents = []
@@ -155,7 +148,7 @@ class SupabaseStorageConnector(BaseConnector):
                         page_content=text,
                         metadata={
                             "id": file_data.id,
-                            "name": file_data.name,
+                            "source": file_data.name,
                             "updated_at": file_data.updated_at,
                             "provider": self.url,
                             "mime_type": mime_type,

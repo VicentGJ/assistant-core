@@ -12,12 +12,13 @@ router = APIRouter(prefix="/search", tags=["search"])
     dependencies=[Depends(validate_token), Depends(check_connector_credentials)],
 )
 async def search_similarity_docs(
-    storage_bucket_name: str,
-    query: str = Query(...),
+    storage_bucket_name: str, query: str = Query(...), amount_of_relevant_docs: int = Query(default=5)
 ):
     try:
         vectorstore = FaissVectorizer(index_name=storage_bucket_name)
-        docs = vectorstore.hybrid_search(query, use_bm25_search=True)
+        docs = vectorstore.hybrid_search(
+            query=query, amount_of_relevant_docs=amount_of_relevant_docs, use_bm25_search=True
+        )
 
         # Convert the list of Document objects to dictionary representation
         serialized_docs = [doc.__dict__ for doc in docs]

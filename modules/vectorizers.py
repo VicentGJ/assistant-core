@@ -1,18 +1,9 @@
 from abc import ABC, abstractmethod
 from asyncio import run
 from os.path import exists, join
-from typing import Any, cast
+from typing import Any
 from uuid import uuid4
 
-from faiss import IndexFlatL2
-from langchain.retrievers import ContextualCompressionRetriever
-from langchain.retrievers.document_compressors import CrossEncoderReranker
-from langchain_cohere import CohereRerank
-from langchain_community.cross_encoders import HuggingFaceCrossEncoder
-from langchain_community.docstore.in_memory import InMemoryDocstore
-from langchain_community.retrievers import BM25Retriever
-from langchain_community.vectorstores import FAISS
-from langchain_community.vectorstores.faiss import FAISS
 from faiss import IndexFlatL2
 from langchain.retrievers import ContextualCompressionRetriever
 from langchain.retrievers.document_compressors import CrossEncoderReranker
@@ -30,7 +21,6 @@ from langchain_core.vectorstores import VectorStore
 from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import TokenTextSplitter
 
-
 from modules.contextualizer import get_contextualized_chunks
 from settings import settings
 
@@ -38,6 +28,7 @@ from settings import settings
 class VectorizerInterface(VectorStore, ABC):
     def send_docs_to_vectorstore(self, docs: list[Document], contextualize_docs: bool = False):
         try:
+            docs = self._combine_documents(doc_list=docs)
             docs_chunks = []
             if not contextualize_docs:
                 docs_chunks = self._split_docs(docs=docs, tokens_per_chunk=250, chunk_overlap=100)
@@ -58,7 +49,6 @@ class VectorizerInterface(VectorStore, ABC):
         pass
 
     def search_similar_docs(self, query: str) -> list[Document]:
-    def search_similar_docs(self, query: str) -> list[Document]:
         try:
             docs = self.similarity_search(
                 query=query,
@@ -69,7 +59,7 @@ class VectorizerInterface(VectorStore, ABC):
             raise Exception(f"Error doing similarity search: {e}")
 
     @abstractmethod
-    def hybrid_search(self, query: str, use_bm25_search: bool = False) -> list[Document]:
+    def hybrid_search(self, query: str, amount_of_docs: int = 5, use_bm25_search: bool = False) -> list[Document]:
         pass
 
     @staticmethod
@@ -81,12 +71,6 @@ class VectorizerInterface(VectorStore, ABC):
         )
         splits = text_splitter.split_documents(docs)
         return splits
-
-    @abstractmethod
-    def hybrid_search(
-        self, query: str, use_bm25_search: bool = False
-    ) -> list[Document]:
-        pass
 
     @staticmethod
     def _combine_documents(doc_list: list[Document]) -> list[Document]:
@@ -158,53 +142,30 @@ class FaissVectorizer(VectorizerInterface, FAISS):
         ids = self.index_to_docstore_id.values()
         self.delete(ids)
 
-    def hybrid_search(self, query: str, use_bm25_search: bool = False) -> list[Document]:
-        initial_k = 20
+    def hybrid_search(
+        self, query: str, amount_of_relevant_docs: int = 5, use_bm25_search: bool = False
+    ) -> list[Document]:
+        similar_docs = self.similarity_search(query=query, k=amount_of_relevant_docs * 2)
 
         if use_bm25_search == True:
-            bm25_docs = self._bm25_search(5, query)
-            bm25_vectorstore = FAISS.from_documents(
-                documents=bm25_docs, embedding=cast(Embeddings, self.embedding_function)
-            )
-            self.merge_from(bm25_vectorstore)
-            retriever = self.as_retriever(search_kwargs={"k": initial_k})
-        else:
-            retriever = self.as_retriever(search_type="similarity", search_kwargs={"k": initial_k})
+            bm25_docs = self._bm25_search(query=query, bm25_k=amount_of_relevant_docs)
+            similar_docs.extend(bm25_docs)
 
-        rerank_retriever = self._get_rerank_retriever(
-            reranker_model="Cohere-multilingual-reranker",
-            reranked_k=5,
-            retriever=retriever,
+        reranker = CohereRerank(
+            cohere_api_key=settings.cohere_api_key,
+            model="rerank-multilingual-v3.0",
+            top_n=amount_of_relevant_docs,
         )
 
-        compressed_docs = rerank_retriever.invoke(query)
+        compressed_docs = reranker.compress_documents(documents=similar_docs, query=query)
 
-        return compressed_docs
+        return list(compressed_docs)
 
-    def _get_rerank_retriever(
-        self, reranker_model: str, reranked_k: int, retriever: RetrieverLike
-    ) -> ContextualCompressionRetriever:
-        rerank_instance: BaseDocumentCompressor
-
-        if reranker_model == "HuggingFaceCrossEncoder-local":
-            model = HuggingFaceCrossEncoder(model_name="BAAI/bge-reranker-base")
-            rerank_instance = CrossEncoderReranker(model=model, top_n=reranked_k)
-        elif reranker_model == "Cohere-multilingual-reranker":
-            rerank_instance = CohereRerank(
-                cohere_api_key=settings.cohere_api_key,
-                model="rerank-multilingual-v3.0",
-                top_n=reranked_k,
-            )
-        else:
-            raise ValueError(f"Reranker model {reranker_model} not supported")
-
-        return ContextualCompressionRetriever(base_compressor=rerank_instance, base_retriever=retriever)
-
-    def _bm25_search(self, bm25_k: int, query: str) -> list[Document]:
+    def _bm25_search(self, query: str, bm25_k: int = 5) -> list[Document]:
         index_size = len(self.index_to_docstore_id)
         retriever = self.as_retriever(search_kwargs={"k": index_size})
         docs = retriever.invoke("")
-        bm25retriever = BM25Retriever.from_documents(docs, k=bm25_k)
+        bm25retriever = BM25Retriever.from_documents(documents=docs, k=bm25_k)
         results = bm25retriever.invoke(query)
 
         return results

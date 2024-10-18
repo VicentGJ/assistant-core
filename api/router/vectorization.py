@@ -1,7 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from time import time
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from starlette.responses import StreamingResponse
 
 from api.dependencies import check_connector_credentials, validate_token
@@ -16,7 +16,7 @@ router = APIRouter(prefix="/vectorization", tags=["vectorization"])
 @router.post("/{storage_bucket_name}", dependencies=[Depends(validate_token)])
 async def vectorize_files(
     storage_bucket_name: str,
-    contextualize_docs: bool = False,
+    contextualize_docs: bool = Query(default=False),
     connector: BaseConnector = Depends(check_connector_credentials),
 ):
     def event_stream():
